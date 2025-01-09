@@ -10,7 +10,7 @@
     "require-dev": {
         "cakephp/cakephp": "^5.1",
         "mockery/mockery": "^1.6",
-        "phpunit/phpunit": "^10.1"
+        "phpunit/phpunit": "^10.3"
     },
     "autoload": {
         "psr-4": {
