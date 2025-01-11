@@ -182,6 +182,23 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected bool $requireFieldPresence = false;
 
     /**
+     * List of fields that can be dynamically set in this entity.
+     *
+     * @var array<string, true>
+     */
+    protected array $allowedDynamicFields = [
+        '_joinData' => true,
+        '_matchingData' => true,
+    ];
+
+    /**
+     * Dynamically set field values.
+     *
+     * @var array<array-key, mixed>
+     */
+    protected array $dynamicFields = [];
+
+    /**
      * Whether to backward compatibility behavior which does not require concrete
      * properties to be defined in the entity class.
      *
@@ -426,7 +443,14 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             if ($this->backwardsCompEnabled) {
                 $this->_fields[$name] = $value;
             } else {
-                $this->{$name} = $value;
+                if (
+                    isset($this->allowedDynamicFields[$name])
+                    && !property_exists($this, $name)
+                ) {
+                    $this->dynamicFields[$name] = $value;
+                } else {
+                    $this->{$name} = $value;
+                }
             }
         }
 
@@ -462,6 +486,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
                 return $result;
             }
+        } elseif (array_key_exists($field, $this->dynamicFields)) {
+            $fieldIsPresent = true;
+            $value = &$this->dynamicFields[$field];
         } elseif (
             in_array($field, $this->propertyFields, true)
             || property_exists($this, $field)
@@ -592,7 +619,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             } else {
                 $rp = $this->reflectedProperty($prop);
                 if ($rp === null) {
-                    return false;
+                    return array_key_exists($prop, $this->dynamicFields);
                 } else {
                     if (!$rp->getHook(PropertyHookType::Get) && !$rp->isInitialized($this)) {
                         return false;
@@ -673,7 +700,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         $field = (array)$field;
         foreach ($field as $p) {
-            unset($this->_fields[$p], $this->_dirty[$p]);
+            unset($this->dynamicFields[$p], $this->_fields[$p], $this->_dirty[$p]);
 
             $pos = array_search($p, $this->propertyFields, true);
             if ($pos !== false) {
@@ -1575,6 +1602,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             foreach ($this->propertyFields as $field) {
                 $fields[$field] = $this->{$field};
             }
+            $fields += $this->dynamicFields;
         }
 
         foreach ($this->_virtual as $field) {

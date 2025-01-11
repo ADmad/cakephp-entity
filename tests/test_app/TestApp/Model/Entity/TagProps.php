@@ -12,5 +12,4 @@ class TagProps extends Entity
     protected string $name;
     protected ?string $description;
     protected string|DateTimeImmutable|null $created;
-    protected $_joinData;
 }
