@@ -5,15 +5,13 @@ namespace TestApp\Model\Entity;
 
 use ADmad\Entity\Datasource\Entity;
 
-class UserProps extends Entity
+class Category extends Entity
 {
     protected int $id;
-    protected ?string $username;
-    protected ?string $password;
+    protected int $parent_id;
+    protected string $name;
     protected $created;
     protected $updated;
-    protected $odd;
-
-    protected $articles;
-    protected $comments;
+    protected Category $parent;
+    protected array $children;
 }

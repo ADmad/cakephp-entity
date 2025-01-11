@@ -8,7 +8,7 @@
         "cakephp/datasource": "^5.1"
     },
     "require-dev": {
-        "cakephp/cakephp": "^5.1",
+        "cakephp/cakephp": "5.x-dev as 5.1.5",
         "mockery/mockery": "^1.6",
         "phpunit/phpunit": "^11.1.3"
     },
