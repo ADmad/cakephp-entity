@@ -675,7 +675,11 @@ class EntityTest extends TestCase
     public function testJsonSerialize(): void
     {
         $data = ['name' => 'James', 'age' => 20, 'phones' => ['123', '457']];
-        $entity = new UserProps($data);
+        $entity = new class ($data) extends Entity {
+            protected $name;
+            protected $age;
+            protected $phones;
+        };
         $this->assertEquals(json_encode($data), json_encode($entity));
     }
 
@@ -684,7 +688,7 @@ class EntityTest extends TestCase
      */
     public function testPhpSerialize(): void
     {
-        $data = ['name' => 'James', 'age' => 20, 'phones' => ['123', '457']];
+        $data = ['username' => 'james', 'password' => 'mypass', 'articles' => ['123', '457']];
         $entity = new UserProps($data);
         $copy = unserialize(serialize($entity));
         $this->assertInstanceOf(Entity::class, $copy);
@@ -966,7 +970,11 @@ class EntityTest extends TestCase
     public function testToArray(): void
     {
         $data = ['name' => 'James', 'age' => 20, 'phones' => ['123', '457']];
-        $entity = new UserProps($data);
+        $entity = new class ($data) extends Entity {
+            protected $name;
+            protected $age;
+            protected $phones;
+        };
 
         $this->assertEquals($data, $entity->toArray());
     }
