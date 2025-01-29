@@ -71,7 +71,6 @@ use TestApp\Model\Entity\ProtectedEntity;
 use TestApp\Model\Entity\Tag;
 use TestApp\Model\Entity\VirtualUser;
 use TestApp\Model\Table\ArticlesTable;
-use TestApp\Model\Table\UsersTable;
 use TestPlugin\Model\Table\CommentsTable;
 
 /**
