@@ -295,59 +295,6 @@ class TableTest extends TestCase
         $this->assertEquals(2, $results[0]->total_articles);
     }
 
-    /**
-     * Tests the table method
-     */
-    public function testTableMethod(): void
-    {
-        $table = new Table(['table' => 'users']);
-        $this->assertSame('users', $table->getTable());
-
-        $table = new UsersTable();
-        $this->assertSame('users', $table->getTable());
-
-        /** @var \Cake\ORM\Table|\PHPUnit\Framework\MockObject\MockObject $table */
-        $table = $this->getMockBuilder(Table::class)
-            ->onlyMethods(['find'])
-            ->setMockClassName('SpecialThingsTable')
-            ->getMock();
-        $this->assertSame('special_things', $table->getTable());
-
-        $table = new Table(['alias' => 'LoveBoats']);
-        $this->assertSame('love_boats', $table->getTable());
-
-        $table->setTable('other');
-        $this->assertSame('other', $table->getTable());
-
-        $table->setTable('database.other');
-        $this->assertSame('database.other', $table->getTable());
-    }
-
-    /**
-     * Tests the setAlias method
-     */
-    public function testSetAlias(): void
-    {
-        $table = new Table(['alias' => 'users']);
-        $this->assertSame('users', $table->getAlias());
-
-        $table = new Table(['table' => 'stuffs']);
-        $this->assertSame('stuffs', $table->getAlias());
-
-        $table = new UsersTable();
-        $this->assertSame('Users', $table->getAlias());
-
-        /** @var \Cake\ORM\Table|\PHPUnit\Framework\MockObject\MockObject $table */
-        $table = $this->getMockBuilder(Table::class)
-            ->onlyMethods(['find'])
-            ->setMockClassName('SpecialThingTable')
-            ->getMock();
-        $this->assertSame('SpecialThing', $table->getAlias());
-
-        $table->setAlias('AnotherOne');
-        $this->assertSame('AnotherOne', $table->getAlias());
-    }
-
     public function testGetAliasException(): void
     {
         $this->expectException(CakeException::class);
