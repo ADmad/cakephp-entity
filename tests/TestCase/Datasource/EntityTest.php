@@ -73,6 +73,7 @@ class EntityTest extends TestCase
     {
         // This class has \AllowDynamicProperties annotation
         $entity = new DynamicProps();
+        $entity->requireFieldPresence(false);
 
         $this->assertNull($entity->get('name'));
         $this->assertFalse($entity->has('name'));
@@ -130,7 +131,7 @@ class EntityTest extends TestCase
             protected $foo;
             protected $bar;
         };
-        $this->assertNull($entity->getOriginal('baz', true));
+
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot retrieve original value for field `baz`');
         $entity->getOriginal('baz', false);
@@ -302,7 +303,6 @@ class EntityTest extends TestCase
         };
         $this->assertSame(1, $entity->get('id'));
         $this->assertSame('bar', $entity->get('foo'));
-        $this->assertNull($entity->not_present);
     }
 
     public function testRequirePresenceException(): void
@@ -611,7 +611,6 @@ class EntityTest extends TestCase
         $this->assertArrayHasKey('id', $entity);
         $this->assertArrayHasKey('name', $entity);
         $this->assertArrayNotHasKey('foo', $entity);
-        $this->assertArrayNotHasKey('thing', $entity);
     }
 
     /**
@@ -736,9 +735,13 @@ class EntityTest extends TestCase
 
         $expected = [];
         $this->assertEquals($expected, $entity->extract([]));
+    }
 
-        $expected = ['id' => 1, 'craziness' => null];
-        $this->assertEquals($expected, $entity->extract(['id', 'craziness']));
+    public function testExtractNonExistent(): void
+    {
+        $this->expectException(MissingPropertyException::class);
+        $entity = new Entity();
+        $entity->extract(['craziness']);
     }
 
     /**
@@ -1571,6 +1574,9 @@ class EntityTest extends TestCase
         $entity = new class (['foo' => 'bar'], ['markClean' => true]) extends Entity {
             protected $foo;
             protected $somethingElse;
+            protected $baz {
+                get => 'baz';
+            }
         };
         $entity->somethingElse = 'value';
         $entity->setAccess('id', false);
@@ -1584,7 +1590,7 @@ class EntityTest extends TestCase
         $expected = [
             'foo' => 'bar',
             'somethingElse' => 'value',
-            'baz' => null,
+            'baz' => 'baz',
             '[new]' => true,
             '[accessible]' => ['*' => true, 'id' => false, 'name' => true],
             '[dirty]' => ['somethingElse' => true, 'foo' => true],

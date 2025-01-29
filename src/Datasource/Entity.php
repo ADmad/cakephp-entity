@@ -175,11 +175,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     /**
      * Whether the presence of a field is checked when accessing a property.
      *
-     * If enabled an exception will be thrown when trying to access a non-existent property.
+     * If disabled no exception will be thrown when trying to access a non-existent property.
+     * You will have to add the #[\AllowDynamicProperties] attribute to your entity class.
      *
      * @var bool
      */
-    protected bool $requireFieldPresence = false;
+    protected bool $requireFieldPresence = true;
 
     /**
      * List of fields that can be dynamically set in this entity.
@@ -300,6 +301,18 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function __isset(string $field): bool
     {
+        if ($this->requireFieldPresence) {
+            if (isset($this->allowedDynamicFields[$field])) {
+                if (array_key_exists($field, $this->dynamicFields)) {
+                    return isset($this->dynamicFields[$field]);
+                }
+
+                return property_exists($this, $field) && isset($this->{$field});
+            }
+
+            return isset($this->{$field});
+        }
+
         return $this->get($field) !== null;
     }
 
@@ -486,9 +499,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
                 return $result;
             }
-        } elseif (array_key_exists($field, $this->dynamicFields)) {
+        } elseif (isset($this->allowedDynamicFields[$field])) {
             $fieldIsPresent = true;
-            $value = &$this->dynamicFields[$field];
+            if (array_key_exists($field, $this->dynamicFields)) {
+                $value = &$this->dynamicFields[$field];
+            } elseif (property_exists($this, $field)) {
+                $value = $this->{$field};
+            }
         } elseif (
             in_array($field, $this->propertyFields, true)
             || property_exists($this, $field)
@@ -1316,6 +1333,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         // Only one path element, check for nested entity with error.
         if (!str_contains($field, '.')) {
+            if (!$this->has($field)) {
+                return [];
+            }
+
             $entity = $this->get($field);
             if ($entity instanceof EntityInterface || is_iterable($entity)) {
                 return $this->_readError($entity);
@@ -1340,7 +1361,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $len = count($path);
             $val = null;
             if ($entity instanceof EntityInterface) {
-                $val = $entity->get($part);
+                if ($entity->has($part)) {
+                    $val = $entity->get($part);
+                }
             } elseif (is_array($entity)) {
                 $val = $entity[$part] ?? false;
             }

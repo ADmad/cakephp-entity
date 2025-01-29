@@ -6,11 +6,12 @@ namespace ADmad\Entity\Datasource;
 class FallbackEntity extends Entity
 {
     /**
-     * Whether to allow dynamic properties to be set.
-     *
-     * This is used as the default value for all entities.
-     *
-     * @var bool
+     * @inheritDoc
      */
     public static bool $enableBackwardCompatibility = true;
+
+    /**
+     * @inheritDoc
+     */
+    protected bool $requireFieldPresence = false;
 }

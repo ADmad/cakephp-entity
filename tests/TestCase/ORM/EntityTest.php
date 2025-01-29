@@ -1117,6 +1117,8 @@ class EntityTest extends TestCase
         $entity->setError('foo', 'bar');
         $this->assertEquals(['bar'], $entity->getError('foo'));
 
+        $this->assertEquals([], $entity->getError('non_existent'));
+
         $expected = [
             'foo' => ['bar'],
         ];

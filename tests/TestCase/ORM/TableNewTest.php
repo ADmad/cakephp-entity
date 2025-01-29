@@ -1946,7 +1946,7 @@ class TableNewTest extends TestCase
         $this->assertCount(3, $results);
         foreach ($results as $article) {
             $this->assertFalse($article->isNew());
-            foreach ((array)$article->tag as $tag) {
+            foreach ((array)$article->tags as $tag) {
                 $this->assertFalse($tag->isNew());
                 $this->assertFalse($tag->_joinData->isNew());
             }
