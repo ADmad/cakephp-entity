@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use ADmad\Entity\Datasource\FallbackEntity;
+use ADmad\Entity\Datasource\Entity;
 use Cake\Core\Configure;
 
 /**
@@ -48,4 +48,4 @@ Configure::write('App', [
     ],
 ]);
 
-class_alias(FallbackEntity::class, '\Cake\ORM\Entity');
+class_alias(Entity::class, '\Cake\ORM\Entity');
