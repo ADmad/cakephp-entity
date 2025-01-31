@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ADmad\Entity\Test\TestCase\Datasource;
 
 use ADmad\Entity\Datasource\Entity;
+use Cake\Core\Exception\CakeException;
 use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\TestSuite\TestCase;
 use Exception;
@@ -73,9 +74,7 @@ class EntityTest extends TestCase
     {
         // This class has \AllowDynamicProperties annotation
         $entity = new DynamicProps();
-        $entity->requireFieldPresence(false);
 
-        $this->assertNull($entity->get('name'));
         $this->assertFalse($entity->has('name'));
 
         $entity->set('name', 'ADmad');
@@ -305,23 +304,20 @@ class EntityTest extends TestCase
         $this->assertSame('bar', $entity->get('foo'));
     }
 
-    public function testRequirePresenceException(): void
+    public function testMissingPropertyException(): void
     {
         $this->expectException(MissingPropertyException::class);
         $this->expectExceptionMessage('Property `not_present` does not exist for the entity `ADmad\Entity\Datasource\Entity`');
 
         $entity = new Entity();
-        $entity->requireFieldPresence();
         $entity->get('not_present');
     }
 
-    public function testRequirePresenceNoException(): void
+    public function testNoMissingPropertyException(): void
     {
         $entity = new class (['is_present' => null]) extends Entity {
             protected ?bool $is_present;
-            protected string $bonus;
         };
-        $entity->requireFieldPresence();
         $this->assertNull($entity->get('is_present'));
 
         $entity = new class extends Entity
@@ -334,7 +330,6 @@ class EntityTest extends TestCase
                 get => 'bonus';
             }
         };
-        $entity->requireFieldPresence();
         $this->assertSame('bonus', $entity->get('bonus'));
     }
 
@@ -1933,5 +1928,11 @@ class EntityTest extends TestCase
         $secondEntity->set('parent', $entity);
 
         $this->assertFalse($entity->hasErrors());
+    }
+
+    public function testRequireFieldPresence()
+    {
+        $this->expectException(CakeException::class);
+        (new Entity())->requireFieldPresence(true);
     }
 }

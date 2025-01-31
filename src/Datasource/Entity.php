@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace ADmad\Entity\Datasource;
 
 use Cake\Collection\Collection;
+use Cake\Core\Exception\CakeException;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\InvalidPropertyInterface;
@@ -435,7 +436,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $value = $this->{$field} ?? null;
         }
 
-        if (!$fieldIsPresent && $this->requireFieldPresence) {
+        if (!$fieldIsPresent) {
             throw new MissingPropertyException([
                 'property' => $field,
                 'entity' => $this::class,
@@ -454,7 +455,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function requireFieldPresence(bool $value = true): void
     {
-        $this->requireFieldPresence = $value;
+        throw new CakeException(
+            'requireFieldPresence() is not supported in this class as use of actual properties is required.'
+        );
     }
 
     /**
