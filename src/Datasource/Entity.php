@@ -61,13 +61,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected array $propertyFields = [];
 
     /**
-     * Holds all fields and their values for this entity.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $_fields = [];
-
-    /**
      * Holds all fields that have been changed and their original values for this entity.
      *
      * @var array<string, mixed>
@@ -664,7 +657,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         $field = (array)$field;
         foreach ($field as $p) {
-            unset($this->dynamicFields[$p], $this->_fields[$p], $this->_dirty[$p]);
+            unset($this->dynamicFields[$p], $this->_dirty[$p]);
 
             $pos = array_search($p, $this->propertyFields, true);
             if ($pos !== false) {
