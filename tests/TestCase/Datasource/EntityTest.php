@@ -370,15 +370,15 @@ class EntityTest extends TestCase
     public function testGetCacheClearedByUnset(): void
     {
         $entity = new class extends Entity {
-            protected ?string $name {
-                get => 'Dr. ' . $this->name;
+            protected ?string $name = null {
+                get => $this->name ? 'Dr. ' . $this->name : null;
             }
         };
         $entity->set('name', 'Jones');
         $this->assertSame('Dr. Jones', $entity->get('name'));
 
         $entity->unset('name');
-        $this->assertSame('Dr. ', $entity->get('name'));
+        $this->assertNull($entity->get('name'));
     }
 
     /**
@@ -814,17 +814,17 @@ class EntityTest extends TestCase
     public function testDirtyChangingProperties(): void
     {
         $entity = new class (['title' => 'Foo']) extends Entity {
-            protected $title;
-            protected $something;
+            protected string $title;
+            protected string $something;
         };
 
         $entity->setDirty('title', false);
         $this->assertFalse($entity->isDirty('title'));
 
         $entity->set('title', 'Foo');
-        $this->assertTrue($entity->isDirty('title'));
+        $this->assertFalse($entity->isDirty('title'));
 
-        $entity->set('title', 'Foo');
+        $entity->set('title', 'Bar');
         $this->assertTrue($entity->isDirty('title'));
 
         $entity->set('something', 'else');

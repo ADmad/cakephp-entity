@@ -377,8 +377,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
-            $this->setDirty($name, true);
-
             if (
                 $this->isOriginalField($name) &&
                 !array_key_exists($name, $this->_original) &&
@@ -392,6 +390,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 $this->propertyFields[] = $name;
             }
 
+            if ($this->isModified($name, $value)) {
+                $this->setDirty($name, true);
+            }
+
             if (
                 isset($this->allowedDynamicFields[$name])
                 && !property_exists($this, $name)
@@ -403,6 +405,38 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         }
 
         return $this;
+    }
+
+    /**
+     * Check if the provided value is same as existing value for a field.
+     *
+     * @param string $field The field to check.
+     * @return bool
+     */
+    protected function isModified(string $field, mixed $value): bool
+    {
+        if (
+            isset($this->allowedDynamicFields[$field])
+            && !property_exists($this, $field)
+        ) {
+            $existing = $this->dynamicFields[$field] ?? $value;
+        } else {
+            $existing = $this->{$field} ?? null;
+        }
+
+        if (($value === null || is_scalar($value)) && $existing === $value) {
+            return false;
+        }
+
+        if (
+            is_object($value)
+            && !($value instanceof EntityInterface)
+            && $existing == $value
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
