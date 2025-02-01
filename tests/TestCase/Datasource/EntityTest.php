@@ -265,9 +265,9 @@ class EntityTest extends TestCase
             ->with(
                 ...self::withConsecutive(
                     [
-                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true],
+                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true, 'allowDynamic' => true],
                     ],
-                    [['foo' => 'bar'], ['guard' => false, 'setter' => true]],
+                    [['foo' => 'bar'], ['guard' => false, 'setter' => true, 'allowDynamic' => true]],
                 ),
             );
 
@@ -287,7 +287,7 @@ class EntityTest extends TestCase
             ->getMock();
         $entity->expects($this->once())
             ->method('set')
-            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true]);
+            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true, 'allowDynamic' => true]);
         $entity->__construct(['foo' => 'bar'], ['guard' => true]);
     }
 
@@ -960,6 +960,12 @@ class EntityTest extends TestCase
         $mock = Mockery::mock(Entity::class)->makePartial();
         $mock->shouldReceive('setNew')->once();
         $mock->__construct([], ['markNew' => true]);
+    }
+
+    public function testConstructorWithDynamicField(): void
+    {
+        $entiy = new Entity(['foo' => 'bar']);
+        $this->assertSame('bar', $entiy->foo);
     }
 
     /**

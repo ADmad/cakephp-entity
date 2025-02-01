@@ -201,6 +201,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             'markNew' => null,
             'guard' => false,
             'source' => null,
+            'allowDynamic' => true,
         ];
 
         if ($options['source'] !== null) {
@@ -217,6 +218,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $this->set($fields, [
                 'setter' => $options['useSetters'],
                 'guard' => $options['guard'],
+                'allowDynamic' => $options['allowDynamic'],
             ]);
         }
 
@@ -357,7 +359,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if (!is_array($field)) {
             throw new InvalidArgumentException('Cannot set an empty field');
         }
-        $options += ['setter' => true, 'guard' => $guard, 'asOriginal' => false];
+        $options += ['setter' => true, 'guard' => $guard, 'asOriginal' => false, 'allowDynamic' => false];
 
         if ($options['asOriginal'] === true) {
             $this->setOriginalField(array_keys($field));
@@ -383,18 +385,22 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 $this->propertyFields[] = $name;
             }
 
+            $propExists = property_exists($this, $name);
+
+            if (!$propExists && $options['allowDynamic']) {
+                $this->allowedDynamicFields[$name] = true;
+            }
+
             if ($this->isModified($name, $value)) {
                 $this->setDirty($name, true);
             }
 
-            if (
-                isset($this->allowedDynamicFields[$name])
-                && !property_exists($this, $name)
-            ) {
+            if (!$propExists && isset($this->allowedDynamicFields[$name])) {
                 $this->dynamicFields[$name] = $value;
-            } else {
-                $this->{$name} = $value;
+                continue;
             }
+
+            $this->{$name} = $value;
         }
 
         return $this;
