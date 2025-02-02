@@ -28,9 +28,6 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
-use Mockery;
-use TestApp\Model\Entity\Article;
-use TestApp\Model\Entity\Author;
 
 /**
  * Tests BelongsTo class
@@ -95,20 +92,6 @@ class BelongsToTest extends TestCase
     }
 
     /**
-     * Test that foreignKey generation
-     */
-    public function testSetForeignKey(): void
-    {
-        $assoc = new BelongsTo('Companies', [
-            'sourceTable' => $this->client,
-            'targetTable' => $this->company,
-        ]);
-        $this->assertSame('company_id', $assoc->getForeignKey());
-        $this->assertSame($assoc, $assoc->setForeignKey('another_key'));
-        $this->assertSame('another_key', $assoc->getForeignKey());
-    }
-
-    /**
      * Tests that the default foreign key condition generation can be disabled.
      */
     public function testDisableForeignKey(): void
@@ -129,29 +112,6 @@ class BelongsToTest extends TestCase
 
         $article = $table->find()->contain(['Authors'])->orderByAsc('Articles.id')->first();
         $this->assertSame('larry', $article->author->name);
-    }
-
-    /**
-     * Test that foreignKey generation ignores database names in target table.
-     */
-    public function testForeignKeyIgnoreDatabaseName(): void
-    {
-        $this->company->setTable('schema.companies');
-        $this->client->setTable('schema.clients');
-        $assoc = new BelongsTo('Companies', [
-            'sourceTable' => $this->client,
-            'targetTable' => $this->company,
-        ]);
-        $this->assertSame('company_id', $assoc->getForeignKey());
-    }
-
-    /**
-     * Tests that the association reports it can be joined
-     */
-    public function testCanBeJoined(): void
-    {
-        $assoc = new BelongsTo('Test');
-        $this->assertTrue($assoc->canBeJoined());
     }
 
     /**

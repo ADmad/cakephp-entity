@@ -63,19 +63,19 @@ use PDOException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use RuntimeException;
-use TestApp\Model\Entity\ArticleProps;
-use TestApp\Model\Entity\ArticlesTagProps;
-use TestApp\Model\Entity\AuthorProps;
+use TestApp\Model\Entity\Article;
+use TestApp\Model\Entity\ArticlesTag;
+use TestApp\Model\Entity\Author;
 use TestApp\Model\Entity\AuthorsTag;
 use TestApp\Model\Entity\Category;
-use TestApp\Model\Entity\CommentProps;
+use TestApp\Model\Entity\Comment;
 use TestApp\Model\Entity\Member;
 use TestApp\Model\Entity\PolymorphicTagged;
 use TestApp\Model\Entity\Section;
 use TestApp\Model\Entity\SectionsMember;
 use TestApp\Model\Entity\SiteArticle;
-use TestApp\Model\Entity\TagProps;
-use TestApp\Model\Entity\UserProps;
+use TestApp\Model\Entity\Tag;
+use TestApp\Model\Entity\User;
 use TestApp\Model\Table\ArticlesTable;
 use TestApp\Model\Table\UsersTable;
 use TestPlugin\Model\Table\CommentsTable;
@@ -269,13 +269,13 @@ class TableTest extends TestCase
     public function testSubqueryWhereClause(): void
     {
         $subquery = $this->getTableLocator()->get('Authors')
-            ->setEntityClass(AuthorProps::class)
+            ->setEntityClass(Author::class)
             ->subquery()
             ->select(['Authors.id'])
             ->where(['Authors.name' => 'mariano']);
 
         $query = $this->getTableLocator()->get('Articles')
-            ->setEntityClass(ArticleProps::class)
+            ->setEntityClass(Article::class)
             ->find()
             ->where(['Articles.author_id IN' => $subquery])
             ->orderBy(['Articles.id' => 'ASC']);
@@ -291,11 +291,11 @@ class TableTest extends TestCase
     public function testSubqueryJoinClause(): void
     {
         $subquery = $this->getTableLocator()->get('Articles')
-            ->setEntityClass(ArticleProps::class)
+            ->setEntityClass(Article::class)
             ->subquery()
             ->select(['author_id']);
 
-        $query = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class)->find();
+        $query = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class)->find();
         $query
             ->select(['Authors.id', 'total_articles' => $query->func()->count('articles.author_id')])
             ->leftJoin(['articles' => $subquery], ['articles.author_id' => new IdentifierExpression('Authors.id')])
@@ -766,7 +766,7 @@ class TableTest extends TestCase
         $table = new Table([
             'table' => 'users',
             'connection' => $this->connection,
-            'entityClass' => UserProps::class,
+            'entityClass' => User::class,
         ]);
         $table->getEventManager()->on(
             'Model.beforeFind',
@@ -1008,16 +1008,16 @@ class TableTest extends TestCase
      */
     public function testHasManyWithClassName(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $table->hasMany('Comments', [
             'conditions' => ['published' => 'Y'],
-        ])->setEntityClass(CommentProps::class);
+        ])->setEntityClass(Comment::class);
 
         $table->hasMany('UnapprovedComments', [
             'className' => 'Comments',
             'conditions' => ['published' => 'N'],
             'propertyName' => 'unaproved_comments',
-        ])->setEntityClass(CommentProps::class);
+        ])->setEntityClass(Comment::class);
 
         $expected = [
             'id' => 1,
@@ -1218,7 +1218,7 @@ class TableTest extends TestCase
         $table = new Table([
             'table' => 'users',
             'connection' => $this->connection,
-            'entityClass' => UserProps::class,
+            'entityClass' => User::class,
         ]);
         $result = $table->deleteAll(['id <' => 4]);
         $this->assertSame(3, $result);
@@ -1237,7 +1237,7 @@ class TableTest extends TestCase
             'table' => 'users',
             'alias' => 'Managers',
             'connection' => $this->connection,
-            'entityClass' => UserProps::class,
+            'entityClass' => User::class,
         ]);
         $result = $table->deleteAll(['Managers.id <' => 4]);
         $this->assertSame(3, $result);
@@ -1308,7 +1308,7 @@ class TableTest extends TestCase
      */
     public function testFindTypedParameters(): void
     {
-        $table = $this->fetchTable('Authors')->setEntityClass(AuthorProps::class);
+        $table = $this->fetchTable('Authors')->setEntityClass(Author::class);
 
         $author = $table->find('WithIdArgument', 2)->first();
         $this->assertSame(2, $author->id);
@@ -1539,7 +1539,7 @@ class TableTest extends TestCase
         $table = new Table([
             'table' => 'users',
             'connection' => $this->connection,
-            'entityClass' => UserProps::class,
+            'entityClass' => User::class,
         ]);
         $table->setDisplayField('username');
         $query = $table
@@ -1578,7 +1578,7 @@ class TableTest extends TestCase
         $table = new Table([
             'table' => 'users',
             'connection' => $this->connection,
-            'entityClass' => UserProps::class,
+            'entityClass' => User::class,
         ]);
         $table->setDisplayField('username');
 
@@ -1598,7 +1598,7 @@ class TableTest extends TestCase
         $articles = new Table([
             'table' => 'articles',
             'connection' => $this->connection,
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
         ]);
 
         $query = $articles->find('list', groupField: 'author_id');
@@ -1637,7 +1637,7 @@ class TableTest extends TestCase
         $table = new Table([
             'table' => 'users',
             'connection' => $this->connection,
-            'entityClass' => UserProps::class,
+            'entityClass' => User::class,
         ]);
         $table->setDisplayField('username');
         $this->deprecated(function () use ($table): void {
@@ -1659,7 +1659,7 @@ class TableTest extends TestCase
      */
     public function testFindListWithVirtualField(): void
     {
-        $entity = new class extends UserProps {
+        $entity = new class extends User {
             protected array $_virtual = ['bonus'];
             protected string $bonus {
                 get => 'bonus';
@@ -1697,10 +1697,10 @@ class TableTest extends TestCase
         $articles = new Table([
             'table' => 'articles',
             'connection' => $this->connection,
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
         ]);
 
-        $articles->belongsTo('Authors')->setEntityClass(AuthorProps::class);
+        $articles->belongsTo('Authors')->setEntityClass(Author::class);
 
         $query = $articles->find('list', valueField: 'author.name')
             ->contain(['Authors'])
@@ -1844,12 +1844,12 @@ class TableTest extends TestCase
     {
         $table = new ArticlesTable([
             'connection' => $this->connection,
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
         ]);
-        $table->associations()->get('Authors')->setEntityClass(AuthorProps::class);
+        $table->associations()->get('Authors')->setEntityClass(Author::class);
 
         $result = $table->find('all')->contain(['Authors'])->first();
-        $this->assertInstanceOf(AuthorProps::class, $result->author);
+        $this->assertInstanceOf(Author::class, $result->author);
     }
 
     /**
@@ -1859,13 +1859,13 @@ class TableTest extends TestCase
     public function testReciprocalHasManyLoading(): void
     {
         $table = $this->fetchTable('Articles');
-        $table->setEntityClass(ArticleProps::class);
-        $table->associations()->get('Authors')->setEntityClass(AuthorProps::class);
+        $table->setEntityClass(Article::class);
+        $table->associations()->get('Authors')->setEntityClass(Author::class);
 
         $result = $table->find('all')->contain(['Authors' => ['Articles']])->first();
         $this->assertCount(2, $result->author->articles);
         foreach ($result->author->articles as $article) {
-            $this->assertInstanceOf(ArticleProps::class, $article);
+            $this->assertInstanceOf(Article::class, $article);
         }
     }
 
@@ -1877,19 +1877,19 @@ class TableTest extends TestCase
     {
         $table = new ArticlesTable([
             'connection' => $this->connection,
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
         ]);
         $articlesTags = $this->fetchTable('ArticlesTags')
-            ->setEntityClass(ArticlesTagProps::class);
+            ->setEntityClass(ArticlesTag::class);
 
         $table->associations()->get('Tags')
             ->setThrough($articlesTags)
-            ->setEntityClass(TagProps::class);
+            ->setEntityClass(Tag::class);
 
         $result = $table->find('all')->contain(['Tags'])->first();
-        $this->assertInstanceOf(TagProps::class, $result->tags[0]);
+        $this->assertInstanceOf(Tag::class, $result->tags[0]);
         $this->assertInstanceOf(
-            ArticlesTagProps::class,
+            ArticlesTag::class,
             $result->tags[0]->_joinData,
         );
     }
@@ -1901,11 +1901,11 @@ class TableTest extends TestCase
     {
         $table = new ArticlesTable([
             'connection' => $this->connection,
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
         ]);
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
-        $table->associations()->get('Authors')->setEntityClass(AuthorProps::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
+        $table->associations()->get('Authors')->setEntityClass(Author::class);
 
         $results = $table->find('all')->contain(['Tags', 'Authors'])->toArray();
         $this->assertCount(3, $results);
@@ -1932,11 +1932,11 @@ class TableTest extends TestCase
     {
         $table = new ArticlesTable([
             'connection' => $this->connection,
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
         ]);
-        $table->Authors->setEntityClass(AuthorProps::class);
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->Authors->setEntityClass(Author::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
         $results = $table->find('all')->contain(['Tags', 'Authors'])->toArray();
         $this->assertCount(3, $results);
         foreach ($results as $article) {
@@ -2167,13 +2167,13 @@ class TableTest extends TestCase
      */
     public function testSaveNewEntity(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'superuser',
             'password' => 'root',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
         ]);
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertEquals($entity->id, self::$nextUserId);
 
@@ -2186,8 +2186,8 @@ class TableTest extends TestCase
      */
     public function testSaveNewEmptyEntity(): void
     {
-        $entity = new UserProps();
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $entity = new User();
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $this->assertFalse($table->save($entity));
     }
 
@@ -2203,7 +2203,7 @@ class TableTest extends TestCase
                 'connection' => $this->connection,
                 'alias' => 'Users',
                 'table' => 'users',
-                'entityClass' => UserProps::class,
+                'entityClass' => User::class,
             ]])
             ->getMock();
         $entity = $table->newEntity(['username' => 'mark']);
@@ -2227,7 +2227,7 @@ class TableTest extends TestCase
                 'connection' => $this->connection,
                 'alias' => 'Users',
                 'table' => 'users',
-                'entityClass' => UserProps::class,
+                'entityClass' => User::class,
             ]])
             ->getMock();
         $entity = $table->newEntity(['id' => 20, 'username' => 'mark']);
@@ -2250,7 +2250,7 @@ class TableTest extends TestCase
                 'connection' => $this->connection,
                 'alias' => 'Users',
                 'table' => 'users',
-                'entityClass' => UserProps::class,
+                'entityClass' => User::class,
             ]])
             ->getMock();
         $entity = $table->newEntity(['id' => 20, 'username' => 'mark']);
@@ -2266,14 +2266,14 @@ class TableTest extends TestCase
      */
     public function testSaveEntityOnlySchemaFields(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'superuser',
             'password' => 'root',
             'odd' => 'super crazy value',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
         ]);
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertEquals($entity->id, self::$nextUserId);
 
@@ -2287,8 +2287,8 @@ class TableTest extends TestCase
      */
     public function testBeforeSaveModifyData(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
-        $data = new UserProps([
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2309,8 +2309,8 @@ class TableTest extends TestCase
      */
     public function testBeforeSaveModifyOptions(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
-        $data = new UserProps([
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
+        $data = new User([
             'username' => 'superuser',
             'password' => 'foo',
             'created' => new DateTime('2013-10-10 00:00'),
@@ -2337,8 +2337,8 @@ class TableTest extends TestCase
      */
     public function testBeforeSaveStopEvent(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
-        $data = new UserProps([
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2362,7 +2362,7 @@ class TableTest extends TestCase
     public function testBeforeSaveStopEventWithNoResult(): void
     {
         $table = $this->getTableLocator()->get('users');
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2379,8 +2379,8 @@ class TableTest extends TestCase
         $this->expectException(AssertionError::class);
         $this->expectExceptionMessage('The beforeSave callback must return `false` or `EntityInterface` instance. Got `int` instead.');
 
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
-        $data = new UserProps([
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2399,7 +2399,7 @@ class TableTest extends TestCase
      */
     public function testAfterSave(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $data = $table->get(1);
 
         $data->username = 'newusername';
@@ -2432,7 +2432,7 @@ class TableTest extends TestCase
     public function testAfterSaveCommitForNonAtomic(): void
     {
         $table = $this->getTableLocator()->get('users');
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2463,7 +2463,7 @@ class TableTest extends TestCase
     public function testAfterSaveCommitWithTransactionRunning(): void
     {
         $table = $this->getTableLocator()->get('users');
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2487,7 +2487,7 @@ class TableTest extends TestCase
     public function testAfterSaveCommitWithNonAtomicAndTransactionRunning(): void
     {
         $table = $this->getTableLocator()->get('users');
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2520,7 +2520,7 @@ class TableTest extends TestCase
             ->setConstructorArgs([$table])
             ->getMock();
         $statement = $this->createMock(StatementInterface::class);
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2557,16 +2557,16 @@ class TableTest extends TestCase
      */
     public function testAfterSaveCommitTriggeredOnlyForPrimaryTable(): void
     {
-        $entity = new ArticleProps([
+        $entity = new Article([
             'title' => 'A Title',
             'body' => 'A body',
         ]);
-        $entity->author = new AuthorProps([
+        $entity->author = new Author([
             'name' => 'Jose',
         ]);
 
-        $table = $this->getTableLocator()->get('articles')->setEntityClass(ArticleProps::class);
-        $table->belongsTo('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('articles')->setEntityClass(Article::class);
+        $table->belongsTo('authors')->setEntityClass(Author::class);
 
         $calledForArticle = false;
         $listenerForArticle = function ($e, $entity, $options) use (&$calledForArticle): void {
@@ -2594,7 +2594,7 @@ class TableTest extends TestCase
     {
         $this->expectException(DatabaseException::class);
         $this->expectExceptionMessage('Cannot insert row in `users` table, it has no primary key');
-        $entity = new UserProps(['username' => 'superuser']);
+        $entity = new User(['username' => 'superuser']);
         $table = $this->getTableLocator()->get('users', [
             'schema' => [
                 'id' => ['type' => 'integer'],
@@ -2621,7 +2621,7 @@ class TableTest extends TestCase
         $connection->expects($this->once())->method('begin');
         $connection->expects($this->once())->method('commit');
         $connection->expects($this->any())->method('inTransaction')->willReturn(true);
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2661,7 +2661,7 @@ class TableTest extends TestCase
         $query->expects($this->once())->method('execute')
             ->will($this->throwException(new PDOException()));
 
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2706,7 +2706,7 @@ class TableTest extends TestCase
             ->method('execute')
             ->willReturn($statement);
 
-        $data = new UserProps([
+        $data = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -2720,7 +2720,7 @@ class TableTest extends TestCase
      */
     public function testSaveOnlyDirtyProperties(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'superuser',
             'password' => 'root',
             'created' => new DateTime('2013-10-10 00:00'),
@@ -2731,7 +2731,7 @@ class TableTest extends TestCase
         $entity->setDirty('created', true);
         $entity->setDirty('updated', true);
 
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertEquals($entity->id, self::$nextUserId);
 
@@ -2745,13 +2745,13 @@ class TableTest extends TestCase
      */
     public function testASavedEntityIsClean(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'superuser',
             'password' => 'root',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
         ]);
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertFalse($entity->isDirty('usermane'));
         $this->assertFalse($entity->isDirty('password'));
@@ -2764,13 +2764,13 @@ class TableTest extends TestCase
      */
     public function testASavedEntityIsNotNew(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'superuser',
             'password' => 'root',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
         ]);
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertFalse($entity->isNew());
     }
@@ -2781,11 +2781,11 @@ class TableTest extends TestCase
      */
     public function testSaveUpdateAuto(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 2,
             'username' => 'baggins',
         ]);
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $original = $table->find('all')->where(['id' => 2])->first();
         $this->assertSame($entity, $table->save($entity));
 
@@ -2804,7 +2804,7 @@ class TableTest extends TestCase
      */
     public function testBeforeSaveGetsCorrectPersistance(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 2,
             'username' => 'baggins',
         ]);
@@ -2830,7 +2830,7 @@ class TableTest extends TestCase
             ->onlyMethods(['exists'])
             ->setConstructorArgs([['table' => 'users', 'connection' => ConnectionManager::get('test')]])
             ->getMock();
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 2,
             'username' => 'baggins',
         ], ['markNew' => false]);
@@ -2861,7 +2861,7 @@ class TableTest extends TestCase
         $connection->expects($this->once())->method('run')
             ->willReturn($statement);
 
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 2,
             'username' => 'baggins',
         ], ['markNew' => false]);
@@ -2880,7 +2880,7 @@ class TableTest extends TestCase
             ->setConstructorArgs([['table' => 'users', 'connection' => $this->connection]])
             ->getMock();
         $table->expects($this->never())->method('query');
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 2,
         ], ['markNew' => false]);
         $this->assertSame($entity, $table->save($entity));
@@ -2892,7 +2892,7 @@ class TableTest extends TestCase
      */
     public function testUpdateDirtyNoActualChanges(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $entity = $table->get(1);
 
         $entity->setAccess('*', true);
@@ -2912,7 +2912,7 @@ class TableTest extends TestCase
             ->setConstructorArgs([['table' => 'users', 'connection' => $this->connection]])
             ->getMock();
         $table->expects($this->never())->method('query');
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'mariano',
         ], ['markNew' => false]);
         $this->assertSame($entity, $table->save($entity));
@@ -2924,8 +2924,8 @@ class TableTest extends TestCase
     public function testSaveManyArray(): void
     {
         $entities = [
-            new AuthorProps(['name' => 'admad']),
-            new AuthorProps(['name' => 'dakota']),
+            new Author(['name' => 'admad']),
+            new Author(['name' => 'dakota']),
         ];
 
         $timesCalled = 0;
@@ -2933,7 +2933,7 @@ class TableTest extends TestCase
             $timesCalled++;
         };
         $table = $this->getTableLocator()
-            ->get('authors')->setEntityClass(AuthorProps::class);
+            ->get('authors')->setEntityClass(Author::class);
 
         $table->getEventManager()
             ->on('Model.afterSaveCommit', $listener);
@@ -2953,8 +2953,8 @@ class TableTest extends TestCase
      */
     public function testSaveManyResultSet(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
-        $table->Articles->setSort('Articles.id')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
+        $table->Articles->setSort('Articles.id')->setEntityClass(Article::class);
 
         $entities = $table->find()
             ->orderBy(['id' => 'ASC'])
@@ -2998,11 +2998,11 @@ class TableTest extends TestCase
      */
     public function testSaveManyFailed(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $expectedCount = $table->find()->count();
         $entities = [
-            new AuthorProps(['name' => 'mark']),
-            new AuthorProps(['name' => 'jose']),
+            new Author(['name' => 'mark']),
+            new Author(['name' => 'jose']),
         ];
         $entities[1]->setErrors(['name' => ['message']]);
         $result = $table->saveMany($entities);
@@ -3020,10 +3020,10 @@ class TableTest extends TestCase
     public function testSaveManyFailedWithException(): void
     {
         $table = $this->getTableLocator()
-            ->get('authors')->setEntityClass(AuthorProps::class);
+            ->get('authors')->setEntityClass(Author::class);
         $entities = [
-            new AuthorProps(['name' => 'mark']),
-            new AuthorProps(['name' => 'jose']),
+            new Author(['name' => 'mark']),
+            new Author(['name' => 'jose']),
         ];
 
         $table->getEventManager()->on('Model.beforeSave', function (EventInterface $event, EntityInterface $entity): void {
@@ -3049,11 +3049,11 @@ class TableTest extends TestCase
     public function testSaveManyOrFailArray(): void
     {
         $entities = [
-            new AuthorProps(['name' => 'admad']),
-            new AuthorProps(['name' => 'dakota']),
+            new Author(['name' => 'admad']),
+            new Author(['name' => 'dakota']),
         ];
 
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $result = $table->saveManyOrFail($entities);
 
         $this->assertSame($entities, $result);
@@ -3068,7 +3068,7 @@ class TableTest extends TestCase
      */
     public function testSaveManyOrFailResultSet(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
 
         $entities = $table->find()
             ->orderBy(['id' => 'ASC'])
@@ -3089,10 +3089,10 @@ class TableTest extends TestCase
      */
     public function testSaveManyOrFailFailed(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $entities = [
-            new AuthorProps(['name' => 'mark']),
-            new AuthorProps(['name' => 'jose']),
+            new Author(['name' => 'mark']),
+            new Author(['name' => 'jose']),
         ];
         $entities[1]->setErrors(['name' => ['message']]);
 
@@ -3106,7 +3106,7 @@ class TableTest extends TestCase
      */
     public function testDelete(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $options = [
             'limit' => 1,
             'conditions' => [
@@ -3127,7 +3127,7 @@ class TableTest extends TestCase
      */
     public function testDeleteDependent(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $table->Articles->setDependent(true);
 
         $entity = $table->get(1);
@@ -3143,11 +3143,11 @@ class TableTest extends TestCase
      */
     public function testDeleteDependentHasMany(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $table->Articles
             ->setDependent(true)
             ->setCascadeCallbacks(true)
-            ->setEntityClass(ArticleProps::class);
+            ->setEntityClass(Article::class);
 
         $articles = $table->getAssociation('Articles')->getTarget();
         $articles->getEventManager()->on('Model.buildRules', function ($event, $rules): void {
@@ -3185,16 +3185,16 @@ class TableTest extends TestCase
      */
     public function testDeleteNoDependentNoCascade(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $table->hasMany('article', [
             'dependent' => false,
-        ])->setEntityClass(ArticleProps::class);
+        ])->setEntityClass(Article::class);
 
         $query = $table->find('all')->where(['id' => 1]);
         $entity = $query->first();
         $table->delete($entity);
 
-        $articles = $table->getAssociation('Articles')->getTarget()->setEntityClass(ArticleProps::class);
+        $articles = $table->getAssociation('Articles')->getTarget()->setEntityClass(Article::class);
         $query = $articles->find('all')->where(['author_id' => $entity->id]);
         $this->assertCount(2, $query->all(), 'Should find rows.');
     }
@@ -3204,7 +3204,7 @@ class TableTest extends TestCase
      */
     public function testDeleteBelongsToMany(): void
     {
-        $table = $this->getTableLocator()->get('articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('articles')->setEntityClass(Article::class);
         $table->belongsToMany('tag', [
             'foreignKey' => 'article_id',
             'joinTable' => 'articles_tags',
@@ -3224,16 +3224,16 @@ class TableTest extends TestCase
      */
     public function testDeleteDependentAliased(): void
     {
-        $Authors = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $Authors = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $Authors->associations()->removeAll();
-        $Articles = $this->getTableLocator()->get('articles')->setEntityClass(ArticleProps::class);
+        $Articles = $this->getTableLocator()->get('articles')->setEntityClass(Article::class);
         $Articles->associations()->removeAll();
 
         $Authors->hasMany('AliasedArticles', [
             'className' => 'Articles',
             'dependent' => true,
             'cascadeCallbacks' => true,
-        ])->setEntityClass(ArticleProps::class);
+        ])->setEntityClass(Article::class);
         $Articles->belongsToMany('Tags');
 
         $author = $Authors->get(1);
@@ -3307,7 +3307,7 @@ class TableTest extends TestCase
      */
     public function testDeleteCallbacks(): void
     {
-        $entity = new AuthorProps(['id' => 1, 'name' => 'mark']);
+        $entity = new Author(['id' => 1, 'name' => 'mark']);
         $options = new ArrayObject(['atomic' => true, 'checkRules' => false, '_primary' => true]);
 
         $mock = $this->getMockBuilder(EventManager::class)->getMock();
@@ -3347,7 +3347,7 @@ class TableTest extends TestCase
      */
     public function testDeleteCallbacksNonAtomic(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
 
         $data = $table->get(1);
 
@@ -3374,7 +3374,7 @@ class TableTest extends TestCase
      */
     public function testAfterDeleteCommitTriggeredOnlyForPrimaryTable(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $table->Articles->setDependent(true);
 
         $called = false;
@@ -3401,7 +3401,7 @@ class TableTest extends TestCase
      */
     public function testDeleteBeforeDeleteAbort(): void
     {
-        $entity = new AuthorProps(['id' => 1, 'name' => 'mark']);
+        $entity = new Author(['id' => 1, 'name' => 'mark']);
 
         $mock = $this->getMockBuilder(EventManager::class)->getMock();
         $mock->expects($this->any())
@@ -3423,7 +3423,7 @@ class TableTest extends TestCase
      */
     public function testDeleteBeforeDeleteReturnResult(): void
     {
-        $entity = new AuthorProps(['id' => 1, 'name' => 'mark']);
+        $entity = new Author(['id' => 1, 'name' => 'mark']);
 
         $mock = $this->getMockBuilder(EventManager::class)->getMock();
         $mock->expects($this->any())
@@ -3446,7 +3446,7 @@ class TableTest extends TestCase
      */
     public function testDeleteIsNew(): void
     {
-        $entity = new AuthorProps(['id' => 1, 'name' => 'mark']);
+        $entity = new Author(['id' => 1, 'name' => 'mark']);
 
         /** @var \Cake\ORM\Table|\PHPUnit\Framework\MockObject\MockObject $table */
         $table = $this->getMockBuilder(Table::class)
@@ -3466,7 +3466,7 @@ class TableTest extends TestCase
      */
     public function testDeleteMany(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $entities = $table->find()->limit(2)->all()->toArray();
         $this->assertCount(2, $entities);
 
@@ -3482,7 +3482,7 @@ class TableTest extends TestCase
      */
     public function testDeleteManyOrFail(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $entities = $table->find()->limit(2)->all()->toArray();
         $this->assertCount(2, $entities);
 
@@ -3499,7 +3499,7 @@ class TableTest extends TestCase
     public function testEntitySourceExistingAndNew(): void
     {
         $this->loadPlugins(['TestPlugin']);
-        $table = $this->getTableLocator()->get('TestPlugin.Authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('TestPlugin.Authors')->setEntityClass(Author::class);
 
         $existingAuthor = $table->find()->first();
         $newAuthor = $table->newEmptyEntity();
@@ -3513,7 +3513,7 @@ class TableTest extends TestCase
      */
     public function testNewEntityAndValidation(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $table->getValidator()->requirePresence('title');
 
         $entity = $table->newEntity([]);
@@ -3526,7 +3526,7 @@ class TableTest extends TestCase
      */
     public function testCreateEntityAndValidation(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $table->getValidator()->requirePresence('title');
 
         $entity = $table->newEmptyEntity();
@@ -3538,7 +3538,7 @@ class TableTest extends TestCase
      */
     public function testMagicFindDefaultToAll(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
 
         $result = $table->findByUsername('garrett');
         $this->assertInstanceOf(Query::class, $result);
@@ -3588,7 +3588,7 @@ class TableTest extends TestCase
      */
     public function testMagicFindFirstAnd(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
 
         $result = $table->findByUsernameAndId('garrett', 4);
         $this->assertInstanceOf(Query::class, $result);
@@ -3602,7 +3602,7 @@ class TableTest extends TestCase
      */
     public function testMagicFindFirstOr(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
 
         $result = $table->findByUsernameOrId('garrett', 4);
         $this->assertInstanceOf(Query::class, $result);
@@ -3624,7 +3624,7 @@ class TableTest extends TestCase
      */
     public function testMagicFindAll(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $result = $table->findAllByAuthorId(1);
         $this->assertInstanceOf(Query::class, $result);
@@ -3639,7 +3639,7 @@ class TableTest extends TestCase
      */
     public function testMagicFindAllAnd(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
 
         $result = $table->findAllByAuthorIdAndPublished(1, 'Y');
         $this->assertInstanceOf(Query::class, $result);
@@ -3656,7 +3656,7 @@ class TableTest extends TestCase
      */
     public function testMagicFindAllOr(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
 
         $result = $table->findAllByAuthorIdOrPublished(1, 'Y');
         $this->assertInstanceOf(Query::class, $result);
@@ -3675,7 +3675,7 @@ class TableTest extends TestCase
      */
     public function testBehaviorIntrospection(): void
     {
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
 
         $table->addBehavior('Timestamp');
         $this->assertTrue($table->hasBehavior('Timestamp'), 'should be true on loaded behavior');
@@ -3687,16 +3687,16 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsTo(): void
     {
-        $entity = new ArticleProps([
+        $entity = new Article([
             'title' => 'A Title',
             'body' => 'A body',
         ]);
-        $entity->author = new AuthorProps([
+        $entity->author = new Author([
             'name' => 'Jose',
         ]);
 
-        $table = $this->getTableLocator()->get('articles')->setEntityClass(ArticleProps::class);
-        $table->belongsTo('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('articles')->setEntityClass(Article::class);
+        $table->belongsTo('authors')->setEntityClass(Author::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertFalse($entity->isNew());
         $this->assertFalse($entity->author->isNew());
@@ -3709,17 +3709,17 @@ class TableTest extends TestCase
      */
     public function testSaveHasOne(): void
     {
-        $entity = new AuthorProps([
+        $entity = new Author([
             'name' => 'Jose',
         ]);
-        $entity->article = new ArticleProps([
+        $entity->article = new Article([
             'title' => 'A Title',
             'body' => 'A body',
         ]);
 
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         $table->associations()->remove('Articles');
-        $table->hasOne('Articles')->setEntityClass(ArticleProps::class);
+        $table->hasOne('Articles')->setEntityClass(Article::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertFalse($entity->isNew());
         $this->assertFalse($entity->article->isNew());
@@ -3734,7 +3734,7 @@ class TableTest extends TestCase
      */
     public function testSaveOnlySaveAssociatedEntities(): void
     {
-        $entity = new AuthorProps([
+        $entity = new Author([
             'name' => 'Jose',
         ]);
 
@@ -3744,7 +3744,7 @@ class TableTest extends TestCase
             'body' => 'A body',
         ];
 
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
         // $table->hasOne('articles');
 
         $table->save($entity);
@@ -3757,22 +3757,22 @@ class TableTest extends TestCase
      */
     public function testSaveHasMany(): void
     {
-        $entity = new AuthorProps([
+        $entity = new Author([
             'name' => 'Jose',
         ]);
         $entity->articles = [
-            new ArticleProps([
+            new Article([
                 'title' => 'A Title',
                 'body' => 'A body',
             ]),
-            new ArticleProps([
+            new Article([
                 'title' => 'Another Title',
                 'body' => 'Another body',
             ]),
         ];
 
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
-        $table->getAssociation('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
+        $table->getAssociation('Articles')->setEntityClass(Article::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertFalse($entity->isNew());
         $this->assertFalse($entity->articles[0]->isNew());
@@ -3788,8 +3788,8 @@ class TableTest extends TestCase
      */
     public function testSaveHasManyOverwrite(): void
     {
-        $table = $this->getTableLocator()->get('authors')->setEntityClass(AuthorProps::class);
-        $table->getAssociation('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('authors')->setEntityClass(Author::class);
+        $table->getAssociation('Articles')->setEntityClass(Article::class);
 
         $entity = $table->get(3, contain: ['Articles']);
         $data = [
@@ -3814,21 +3814,21 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsToMany(): void
     {
-        $entity = new ArticleProps([
+        $entity = new Article([
             'title' => 'A Title',
             'body' => 'A body',
         ]);
         $entity->tags = [
-            new TagProps([
+            new Tag([
                 'name' => 'Something New',
             ]),
-            new TagProps([
+            new Tag([
                 'name' => 'Another Something',
             ]),
         ];
         $table = $this->getTableLocator()->get('Articles');
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
         $this->assertSame($entity, $table->save($entity));
         $this->assertFalse($entity->isNew());
         $this->assertFalse($entity->tags[0]->isNew());
@@ -3846,9 +3846,9 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsToManyJoinDataOnExistingRecord(): void
     {
-        $tags = $this->getTableLocator()->get('Tags')->setEntityClass(TagProps::class);
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->associations()->get('Tags')->junction()->setEntityClass(ArticlesTagProps::class);
+        $tags = $this->getTableLocator()->get('Tags')->setEntityClass(Tag::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->associations()->get('Tags')->junction()->setEntityClass(ArticlesTag::class);
 
         $entity = $table->find()->contain('Tags')->first();
         // not associated to the article already.
@@ -3872,9 +3872,9 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsToManyJoinData(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $articles->Tags->setEntityClass(TagProps::class);
-        $articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $articles->Tags->setEntityClass(Tag::class);
+        $articles->Tags->junction()->setEntityClass(ArticlesTag::class);
         $article = $articles->get(1, contain: ['Tags']);
         $data = [
             'tags' => [
@@ -3893,13 +3893,13 @@ class TableTest extends TestCase
      */
     public function testPolymorphicBelongsToManySave(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $articles->Tags->setThrough('PolymorphicTagged')
             ->setForeignKey('foreign_key')
             ->setConditions(['PolymorphicTagged.foreign_model' => 'Articles'])
             ->setSort(['PolymorphicTagged.position' => 'ASC']);
 
-        $articles->Tags->setEntityClass(TagProps::class);
+        $articles->Tags->setEntityClass(Tag::class);
         $articles->Tags->junction()->setEntityClass(PolymorphicTagged::class);
 
         $entity = $articles->get(1, contain: ['Tags']);
@@ -3961,9 +3961,9 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsToManyDeleteAllLinks(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->Tags->setSaveStrategy('replace')->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->Tags->setSaveStrategy('replace')->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $entity = $table->get(1, contain: 'Tags');
         $this->assertCount(2, $entity->tags, 'Fixture data did not change.');
@@ -3982,14 +3982,14 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsToManyDeleteSomeLinks(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->Tags->setSaveStrategy('replace')->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->Tags->setSaveStrategy('replace')->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $entity = $table->get(1, contain: 'Tags');
         $this->assertCount(2, $entity->tags, 'Fixture data did not change.');
 
-        $tag = new TagProps([
+        $tag = new Tag([
             'id' => 2,
         ]);
         $entity->tags = [$tag];
@@ -4008,9 +4008,9 @@ class TableTest extends TestCase
      */
     public function testSaveBelongsToManyIgnoreNonEntityData(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $articles->Tags->setEntityClass(TagProps::class);
-        $articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $articles->Tags->setEntityClass(Tag::class);
+        $articles->Tags->junction()->setEntityClass(ArticlesTag::class);
         $article = $articles->get(1, contain: ['Tags']);
         $article->tags = [
             '_ids' => [2, 1],
@@ -4027,7 +4027,7 @@ class TableTest extends TestCase
         $table = $this->getMockBuilder(Table::class)
             ->onlyMethods(['_processSave'])
             ->getMock();
-        $entity = new UserProps(
+        $entity = new User(
             ['id' => 999],
             ['markNew' => false, 'markClean' => true],
         );
@@ -4040,14 +4040,14 @@ class TableTest extends TestCase
      */
     public function testBelongsToManyIntegration(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $article = $table->find('all')->where(['id' => 1])->contain(['Tags'])->first();
         $tags = $article->tags;
         $this->assertNotEmpty($tags);
-        $tags[] = new TagProps(['name' => 'Something New']);
+        $tags[] = new Tag(['name' => 'Something New']);
         $article->tags = $tags;
         $this->assertSame($article, $table->save($article));
         $tags = $article->tags;
@@ -4063,23 +4063,23 @@ class TableTest extends TestCase
      */
     public function testLinkBelongsToMany(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $tagsTable = $this->getTableLocator()->get('Tags')->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $tagsTable = $this->getTableLocator()->get('Tags')->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $source = ['source' => 'Tags'];
         $options = ['markNew' => false];
 
-        $article = new ArticleProps([
+        $article = new Article([
             'id' => 1,
         ], $options);
 
-        $newTag = new TagProps([
+        $newTag = new Tag([
             'name' => 'Foo',
             'description' => 'Foo desc',
             'created' => null,
         ], $source);
-        $tags[] = new TagProps([
+        $tags[] = new Tag([
             'id' => 3,
         ], $options + $source);
         $tags[] = $newTag;
@@ -4102,8 +4102,8 @@ class TableTest extends TestCase
      */
     public function testLinkHasMany(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $author = $authors->newEntity(['name' => 'mylux']);
         $author = $authors->save($author);
@@ -4135,8 +4135,8 @@ class TableTest extends TestCase
      */
     public function testLinkHasManyReplaceSaveStrategy(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $authors->Articles->setSaveStrategy('replace');
 
@@ -4182,8 +4182,8 @@ class TableTest extends TestCase
      */
     public function testLinkHasManyExisting(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $authors->Articles->setSaveStrategy('replace');
 
@@ -4232,8 +4232,8 @@ class TableTest extends TestCase
      */
     public function testUnlinkHasManyCleanProperty(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $authors->Articles->setSaveStrategy('replace');
 
@@ -4275,8 +4275,8 @@ class TableTest extends TestCase
      */
     public function testUnlinkHasManyNotCleanProperty(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $authors->Articles->setSaveStrategy('replace');
 
@@ -4320,8 +4320,8 @@ class TableTest extends TestCase
      */
     public function testUnlinkHasManyEmpty(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $authors->Articles->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $authors->Articles->setEntityClass(Article::class);
         $author = $authors->get(1);
         $article = $authors->Articles->get(1);
 
@@ -4341,7 +4341,7 @@ class TableTest extends TestCase
                 'connection' => $this->connection,
                 'alias' => 'Articles',
                 'table' => 'articles',
-                'entityClass' => ArticleProps::class,
+                'entityClass' => Article::class,
             ]])
             ->getMock();
 
@@ -4361,7 +4361,7 @@ class TableTest extends TestCase
                 ],
             ])
             ->getMock();
-        $hasManyArticles->setEntityClass(ArticleProps::class);
+        $hasManyArticles->setEntityClass(Article::class);
         $hasManyArticles->method('getTarget')->willReturn($articles);
 
         $associations->add('Articles', $hasManyArticles);
@@ -4371,7 +4371,7 @@ class TableTest extends TestCase
             'alias' => 'Authors',
             'table' => 'authors',
             'associations' => $associations,
-            'entityClass' => AuthorProps::class,
+            'entityClass' => Author::class,
         ]);
         $authors->Articles->setSource($authors);
 
@@ -4427,9 +4427,9 @@ class TableTest extends TestCase
             'connection' => $this->connection,
             'alias' => 'Authors',
             'table' => 'authors',
-            'entityClass' => AuthorProps::class,
+            'entityClass' => Author::class,
         ]);
-        $authors->hasMany('Articles')->setEntityClass(ArticleProps::class);
+        $authors->hasMany('Articles')->setEntityClass(Article::class);
 
         $author = $authors->newEntity(['name' => 'mylux']);
         $author = $authors->save($author);
@@ -4469,9 +4469,9 @@ class TableTest extends TestCase
             'connection' => $this->connection,
             'alias' => 'Authors',
             'table' => 'authors',
-            'entityClass' => AuthorProps::class,
+            'entityClass' => Author::class,
         ]);
-        $authors->hasMany('Articles')->setEntityClass(ArticleProps::class);
+        $authors->hasMany('Articles')->setEntityClass(Article::class);
 
         $author = $authors->newEntity(['name' => 'mylux']);
         $author = $authors->save($author);
@@ -4505,8 +4505,8 @@ class TableTest extends TestCase
      */
     public function testReplaceHasMany(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $author = $authors->newEntity(['name' => 'mylux']);
         $author = $authors->save($author);
@@ -4558,9 +4558,9 @@ class TableTest extends TestCase
      */
     public function testUnlinkBelongsToMany(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->getAssociation('Tags')->setEntityClass(TagProps::class);
-        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->getAssociation('Tags')->setEntityClass(Tag::class);
+        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTag::class);
 
         $article = $table->find('all')
             ->where(['id' => 1])
@@ -4577,15 +4577,15 @@ class TableTest extends TestCase
      */
     public function testUnlinkBelongsToManyMultiple(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->getAssociation('Tags')->setEntityClass(TagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->getAssociation('Tags')->setEntityClass(Tag::class);
         $options = ['markNew' => false];
 
-        $article = new ArticleProps(['id' => 1], $options);
-        $tags[] = new TagProps(['id' => 1], $options);
-        $tags[] = new TagProps(['id' => 2], $options);
+        $article = new Article(['id' => 1], $options);
+        $tags[] = new Tag(['id' => 1], $options);
+        $tags[] = new Tag(['id' => 2], $options);
 
-        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTag::class);
         $table->getAssociation('Tags')->unlink($article, $tags);
         $left = $table->find('all')->where(['id' => 1])->contain(['Tags'])->first();
         $this->assertEmpty($left->tags);
@@ -4597,19 +4597,19 @@ class TableTest extends TestCase
      */
     public function testUnlinkBelongsToManyPassingJoint(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $options = ['markNew' => false];
 
-        $article = new ArticleProps(['id' => 1], $options);
-        $tags[] = new TagProps(['id' => 1], $options);
-        $tags[] = new TagProps(['id' => 2], $options);
+        $article = new Article(['id' => 1], $options);
+        $tags[] = new Tag(['id' => 1], $options);
+        $tags[] = new Tag(['id' => 2], $options);
 
-        $tags[1]->_joinData = new ArticlesTagProps([
+        $tags[1]->_joinData = new ArticlesTag([
             'article_id' => 1,
             'tag_id' => 2,
         ], $options);
 
-        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTag::class);
         $table->getAssociation('Tags')->unlink($article, $tags);
         $left = $table->find('all')->where(['id' => 1])->contain(['Tags'])->first();
         $this->assertEmpty($left->tags);
@@ -4620,16 +4620,16 @@ class TableTest extends TestCase
      */
     public function testReplacelinksBelongsToMany(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $options = ['markNew' => false];
 
-        $article = new ArticleProps(['id' => 1], $options);
-        $tags[] = new TagProps(['id' => 2], $options);
-        $tags[] = new TagProps(['id' => 3], $options);
-        $tags[] = new TagProps(['name' => 'foo']);
+        $article = new Article(['id' => 1], $options);
+        $tags[] = new Tag(['id' => 2], $options);
+        $tags[] = new Tag(['id' => 3], $options);
+        $tags[] = new Tag(['name' => 'foo']);
 
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
         $table->getAssociation('Tags')->replaceLinks($article, $tags);
         $this->assertSame(2, $article->tags[0]->id);
         $this->assertSame(3, $article->tags[1]->id);
@@ -4648,13 +4648,13 @@ class TableTest extends TestCase
      */
     public function testReplacelinksBelongsToManyWithEmpty(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->getAssociation('Tags')->setEntityClass(TagProps::class);
-        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->getAssociation('Tags')->setEntityClass(Tag::class);
+        $table->getAssociation('Tags')->junction()->setEntityClass(ArticlesTag::class);
 
         $options = ['markNew' => false];
 
-        $article = new ArticleProps(['id' => 1], $options);
+        $article = new Article(['id' => 1], $options);
         $tags = [];
 
         $table->getAssociation('Tags')->replaceLinks($article, $tags);
@@ -4669,21 +4669,21 @@ class TableTest extends TestCase
      */
     public function testReplacelinksBelongsToManyWithJoint(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $options = ['markNew' => false];
 
-        $article = new ArticleProps(['id' => 1], $options);
-        $tags[] = new TagProps([
+        $article = new Article(['id' => 1], $options);
+        $tags[] = new Tag([
             'id' => 2,
-            '_joinData' => new ArticlesTagProps([
+            '_joinData' => new ArticlesTag([
                 'article_id' => 1,
                 'tag_id' => 2,
             ]),
         ], $options);
-        $tags[] = new TagProps(['id' => 3], $options);
+        $tags[] = new Tag(['id' => 3], $options);
 
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
         $table->getAssociation('Tags')->replaceLinks($article, $tags);
         $this->assertSame($tags, $article->tags);
         $article = $table->find('all')->where(['id' => 1])->contain(['Tags'])->first();
@@ -4697,9 +4697,9 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToImplicitBelongsToManyDeletesUsingSaveReplace(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $articles->Tags->setEntityClass(TagProps::class);
-        $articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $articles->Tags->setEntityClass(Tag::class);
+        $articles->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $tags = $articles->Tags;
         $tags->setSaveStrategy(BelongsToMany::SAVE_REPLACE)
@@ -4737,9 +4737,9 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToInternalSaveCallsUsingBelongsToManyLink(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $articles->Tags->setEntityClass(TagProps::class);
-        $articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $articles->Tags->setEntityClass(Tag::class);
+        $articles->Tags->junction()->setEntityClass(ArticlesTag::class);
         $tags = $articles->Tags;
 
         $actualOptions = null;
@@ -4775,9 +4775,9 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToInternalSaveCallsUsingBelongsToManyUnlink(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $articles->Tags->setEntityClass(TagProps::class);
-        $articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $articles->Tags->setEntityClass(Tag::class);
+        $articles->Tags->junction()->setEntityClass(ArticlesTag::class);
         $tags = $articles->Tags;
 
         $actualOptions = null;
@@ -4807,9 +4807,9 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToInternalSaveAndDeleteCallsUsingBelongsToManyReplaceLinks(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $articles->Tags->setEntityClass(TagProps::class);
-        $articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $articles->Tags->setEntityClass(Tag::class);
+        $articles->Tags->junction()->setEntityClass(ArticlesTag::class);
         $tags = $articles->Tags;
 
         $actualSaveOptions = null;
@@ -4864,8 +4864,8 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToImplicitHasManyDeletesUsingSaveReplace(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
-        $authors->getAssociation('Articles')->setEntityClass(ArticleProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
+        $authors->getAssociation('Articles')->setEntityClass(Article::class);
 
         $articles = $authors->Articles;
         $articles->setSaveStrategy(HasMany::SAVE_REPLACE)
@@ -4904,9 +4904,9 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToInternalSaveCallsUsingHasManyLink(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $articles = $authors->Articles;
-        $articles->setEntityClass(ArticleProps::class);
+        $articles->setEntityClass(Article::class);
 
         $actualOptions = null;
         $articles->getTarget()->getEventManager()->on(
@@ -4945,12 +4945,12 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToInternalSaveCallsUsingHasManyUnlink(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $articles = $authors->Articles;
         $articles
             ->setDependent(true)
             ->setCascadeCallbacks(true)
-            ->setEntityClass(ArticleProps::class);
+            ->setEntityClass(Article::class);
 
         $actualOptions = null;
         $articles->getTarget()->getEventManager()->on(
@@ -4981,12 +4981,12 @@ class TableTest extends TestCase
      */
     public function testOptionsBeingPassedToInternalSaveAndDeleteCallsUsingHasManyReplace(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $articles = $authors->Articles;
         $articles
             ->setDependent(true)
             ->setCascadeCallbacks(true)
-            ->setEntityClass(ArticleProps::class);
+            ->setEntityClass(Article::class);
 
         $actualSaveOptions = null;
         $actualDeleteOptions = null;
@@ -5046,10 +5046,10 @@ class TableTest extends TestCase
      */
     public function testBackwardsCompatibilityForBelongsToManyUnlinkCleanPropertyOption(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $tags = $articles->Tags;
-        $tags->setEntityClass(TagProps::class);
-        $tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $tags->setEntityClass(Tag::class);
+        $tags->junction()->setEntityClass(ArticlesTag::class);
 
         $actualOptions = null;
         $tags->junction()->getEventManager()->on(
@@ -5076,12 +5076,12 @@ class TableTest extends TestCase
      */
     public function testBackwardsCompatibilityForHasManyUnlinkCleanPropertyOption(): void
     {
-        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $authors = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $articles = $authors->Articles;
         $articles
             ->setDependent(true)
             ->setCascadeCallbacks(true)
-            ->setEntityClass(ArticleProps::class);
+            ->setEntityClass(Article::class);
 
         $actualOptions = null;
         $articles->getTarget()->getEventManager()->on(
@@ -5335,8 +5335,8 @@ class TableTest extends TestCase
      */
     public function testPatchEntity(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $entity = new ArticleProps(['title' => 'old title'], ['markNew' => false]);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $entity = new Article(['title' => 'old title'], ['markNew' => false]);
         $data = ['title' => 'new title'];
         $entity = $table->patchEntity($entity, $data);
 
@@ -5376,7 +5376,7 @@ class TableTest extends TestCase
      */
     public function testPatchEntities(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $entities = $table->find()->limit(2)->toArray();
 
         $data = [
@@ -5395,14 +5395,14 @@ class TableTest extends TestCase
      */
     public function testDebugInfo(): void
     {
-        $articles = $this->getTableLocator()->get('articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('articles')->setEntityClass(Article::class);
         $articles->addBehavior('Timestamp');
         $result = $articles->__debugInfo();
         $expected = [
             'registryAlias' => 'articles',
             'table' => 'articles',
             'alias' => 'articles',
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
             'associations' => ['Authors', 'Tags', 'ArticlesTags'],
             'behaviors' => ['Timestamp'],
             'defaultConnection' => 'default',
@@ -5410,13 +5410,13 @@ class TableTest extends TestCase
         ];
         $this->assertEquals($expected, $result);
 
-        $articles = $this->getTableLocator()->get('Foo.Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Foo.Articles')->setEntityClass(Article::class);
         $result = $articles->__debugInfo();
         $expected = [
             'registryAlias' => 'Foo.Articles',
             'table' => 'articles',
             'alias' => 'Articles',
-            'entityClass' => ArticleProps::class,
+            'entityClass' => Article::class,
             'associations' => [],
             'behaviors' => [],
             'defaultConnection' => 'default',
@@ -5430,7 +5430,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateNewEntity(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $callbackExecuted = false;
         $firstArticle = $articles->findOrCreate(['title' => 'Not there'], function ($article) use (&$callbackExecuted): void {
@@ -5458,7 +5458,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateExistingEntity(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $article = $articles->findOrCreate(['title' => 'First Article'], function ($article): void {
             $this->fail('Should not be called for existing entities.');
@@ -5473,7 +5473,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateDefaults(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $callbackExecuted = false;
         $article = $articles->findOrCreate(
@@ -5504,7 +5504,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateNoCallable(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $article = $articles->findOrCreate(['title' => 'Just Something New']);
         $this->assertFalse($article->isNew());
@@ -5517,7 +5517,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateSearchCallable(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $calledOne = false;
         $calledTwo = false;
@@ -5542,7 +5542,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateNoDefaults(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $article = $articles->findOrCreate(['title' => 'A New Article', 'published' => 'Y'], function ($article): void {
             $this->assertInstanceOf(EntityInterface::class, $article);
@@ -5560,7 +5560,7 @@ class TableTest extends TestCase
     public function testFindOrCreateTransactions(): void
     {
         $eventTriggered = false;
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $articles->getEventManager()->on(
             'Model.afterSaveCommit',
             function (EventInterface $event, EntityInterface $entity, ArrayObject $options) use (&$eventTriggered): void {
@@ -5588,7 +5588,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateNoTransaction(): void
     {
-        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $articles = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
 
         $article = $articles->findOrCreate(function (SelectQuery $query): void {
             $this->assertInstanceOf(SelectQuery::class, $query);
@@ -5629,7 +5629,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreateAccessibleFields(): void
     {
-        $entity = new class () extends ArticleProps {
+        $entity = new class () extends Article {
             protected array $_accessible = ['id' => true, 'title' => false];
         };
 
@@ -5649,7 +5649,7 @@ class TableTest extends TestCase
      */
     public function testFindOrCreatePartialValidation(): void
     {
-        $entity = new class () extends ArticleProps {
+        $entity = new class () extends Article {
             protected array $_accessible = ['id' => true, 'title' => false];
         };
 
@@ -5674,7 +5674,7 @@ class TableTest extends TestCase
      */
     public function testValidateUnique(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
         $validator = new Validator();
         $validator->add('username', 'unique', ['rule' => 'validateUnique', 'provider' => 'table']);
         $validator->setProvider('table', $table);
@@ -5703,7 +5703,7 @@ class TableTest extends TestCase
      */
     public function testValidateUniqueScope(): void
     {
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
         $validator = new Validator();
         $validator->add('username', 'unique', [
             'rule' => ['validateUnique', ['derp' => 'erp', 'scope' => 'id']],
@@ -5759,8 +5759,8 @@ class TableTest extends TestCase
      */
     public function testCallbackArgumentTypes(): void
     {
-        $table = $this->getTableLocator()->get('articles')->setEntityClass(ArticleProps::class);
-        $table->belongsTo('authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('articles')->setEntityClass(Article::class);
+        $table->belongsTo('authors')->setEntityClass(Author::class);
 
         $eventManager = $table->getEventManager();
 
@@ -5833,7 +5833,7 @@ class TableTest extends TestCase
                 $afterSaveCount++;
             },
         );
-        $entity = new ArticleProps(['title' => 'Title']);
+        $entity = new Article(['title' => 'Title']);
         $this->assertNotFalse($table->save($entity));
         $this->assertSame(1, $buildRulesCount);
         $this->assertSame(1, $beforeRulesCount);
@@ -5865,7 +5865,7 @@ class TableTest extends TestCase
      */
     public function testSaveWithClonedEntity(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $article = $table->get(1);
 
         $cloned = clone $article;
@@ -5892,8 +5892,8 @@ class TableTest extends TestCase
             ],
         ];
 
-        $userTable = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
-        $userTable->hasMany('Comments')->setEntityClass(CommentProps::class);
+        $userTable = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
+        $userTable->hasMany('Comments')->setEntityClass(Comment::class);
         $savedUser = $userTable->save($userTable->newEntity($data, ['associated' => ['Comments']]));
         $retrievedUser = $userTable->find('all')->where(['id' => $savedUser->id])->contain(['Comments'])->first();
         $this->assertEquals($savedUser->comments[0]->user_id, $retrievedUser->comments[0]->user_id);
@@ -5915,8 +5915,8 @@ class TableTest extends TestCase
             ],
         ];
 
-        $userTable = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
-        $userTable->hasMany('Comments')->setEntityClass(CommentProps::class);
+        $userTable = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
+        $userTable->hasMany('Comments')->setEntityClass(Comment::class);
         $savedUser = $userTable->save($userTable->newEntity($data, ['associated' => ['Comments']]));
 
         $counter = 0;
@@ -5950,9 +5950,9 @@ class TableTest extends TestCase
             ],
         ];
 
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->Tags->setEntityClass(TagProps::class);
-        $table->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->Tags->setEntityClass(Tag::class);
+        $table->Tags->junction()->setEntityClass(ArticlesTag::class);
         $article = $table->save($table->newEntity($data, ['associated' => ['Tags']]));
 
         $counter = 0;
@@ -5977,7 +5977,7 @@ class TableTest extends TestCase
      */
     public function testSaveCorrectPrimaryKeyType(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'superuser',
             'created' => new DateTime('2013-10-10 00:00'),
             'updated' => new DateTime('2013-10-10 00:00'),
@@ -5993,7 +5993,7 @@ class TableTest extends TestCase
      */
     public function testEntityClean(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
         $table->getValidator()->requirePresence('body');
         $entity = $table->newEntity(['title' => 'mark']);
 
@@ -6020,10 +6020,10 @@ class TableTest extends TestCase
      */
     public function testLoadIntoEntity(): void
     {
-        $table = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $table->hasMany('SiteArticles')->setEntityClass(SiteArticle::class);
-        $table->Articles->setEntityClass(ArticleProps::class);
-        $table->Articles->Tags->setEntityClass(TagProps::class);
+        $table->Articles->setEntityClass(Article::class);
+        $table->Articles->Tags->setEntityClass(Tag::class);
         $table->Articles->Tags->junction()->setEntityClass(AuthorsTag::class);
 
         $entity = $table->get(1);
@@ -6040,11 +6040,11 @@ class TableTest extends TestCase
      */
     public function testLoadIntoWithConditions(): void
     {
-        $table = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $table->hasMany('SiteArticles')->setEntityClass(SiteArticle::class);
-        $table->Articles->setEntityClass(ArticleProps::class);
-        $table->Articles->Tags->setEntityClass(TagProps::class);
-        $table->Articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->Articles->setEntityClass(Article::class);
+        $table->Articles->Tags->setEntityClass(Tag::class);
+        $table->Articles->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $entity = $table->get(1);
         $options = [
@@ -6067,8 +6067,8 @@ class TableTest extends TestCase
      */
     public function testLoadBelongsTo(): void
     {
-        $table = $this->getTableLocator()->get('Articles')->setEntityClass(ArticleProps::class);
-        $table->Authors->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('Articles')->setEntityClass(Article::class);
+        $table->Authors->setEntityClass(Author::class);
 
         $entity = $table->get(2);
         $result = $table->loadInto($entity, ['Authors']);
@@ -6084,11 +6084,11 @@ class TableTest extends TestCase
      */
     public function testLoadIntoMany(): void
     {
-        $table = $this->getTableLocator()->get('Authors')->setEntityClass(AuthorProps::class);
+        $table = $this->getTableLocator()->get('Authors')->setEntityClass(Author::class);
         $table->hasMany('SiteArticles')->setEntityClass(SiteArticle::class);
-        $table->Articles->setEntityClass(ArticleProps::class);
-        $table->Articles->Tags->setEntityClass(TagProps::class);
-        $table->Articles->Tags->junction()->setEntityClass(ArticlesTagProps::class);
+        $table->Articles->setEntityClass(Article::class);
+        $table->Articles->Tags->setEntityClass(Tag::class);
+        $table->Articles->Tags->junction()->setEntityClass(ArticlesTag::class);
 
         $entities = $table->find()->toArray();
         $contain = ['SiteArticles', 'Articles.Tags'];
@@ -6131,7 +6131,7 @@ class TableTest extends TestCase
         $this->expectException(PersistenceFailedException::class);
         $this->expectExceptionMessage('Entity save failure. Found the following errors (field.0: "Some message", multiple.one: "One", multiple.two: "Two")');
 
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 99,
         ]);
         $entity->setError('field', 'Some message');
@@ -6149,16 +6149,16 @@ class TableTest extends TestCase
         $this->expectException(PersistenceFailedException::class);
         $this->expectExceptionMessage('Entity save failure. Found the following errors (articles.0.title.0: "Bad value")');
 
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'bad',
             'articles' => [
-                new ArticleProps(['title' => 'not an entity']),
+                new Article(['title' => 'not an entity']),
             ],
         ]);
         $entity->articles[0]->setError('title', 'Bad value');
 
-        $table = $this->getTableLocator()->get('Users')->setEntityClass(UserProps::class);
-        $table->hasMany('Articles')->setEntityClass(ArticleProps::class);
+        $table = $this->getTableLocator()->get('Users')->setEntityClass(User::class);
+        $table->hasMany('Articles')->setEntityClass(Article::class);
 
         $table->saveOrFail($entity);
     }
@@ -6168,10 +6168,10 @@ class TableTest extends TestCase
      */
     public function testDeleteOrFailGetEntity(): void
     {
-        $entity = new UserProps([
+        $entity = new User([
             'id' => 999,
         ]);
-        $table = $this->getTableLocator()->get('users')->setEntityClass(UserProps::class);
+        $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
 
         try {
             $table->deleteOrFail($entity);

@@ -5,7 +5,7 @@ namespace TestApp\Model\Entity;
 
 use ADmad\Entity\Datasource\Entity;
 
-class UserProps extends Entity
+class User extends Entity
 {
     protected int $id;
     protected string $name;

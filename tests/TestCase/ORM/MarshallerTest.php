@@ -29,16 +29,14 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use TestApp\Model\Entity\Article;
 use TestApp\Model\Entity\ArticlesTag;
-use TestApp\Model\Entity\CommentProps;
-use TestApp\Model\Entity\OpenArticleEntity;
+use TestApp\Model\Entity\Comment;
 use TestApp\Model\Entity\OpenTag;
 use TestApp\Model\Entity\ProtectedArticle;
 use TestApp\Model\Entity\ProtectedUser;
 use TestApp\Model\Entity\SpecialTag;
 use TestApp\Model\Entity\Tag;
-use TestApp\Model\Entity\UserProps;
+use TestApp\Model\Entity\User;
 use TestApp\Model\Table\GreedyCommentsTable;
-use TestPlugin\Model\Entity\Comment;
 
 /**
  * Marshaller test case
@@ -75,10 +73,10 @@ class MarshallerTest extends TestCase
         $this->articles->setEntityClass(Article::class);
 
         $this->comments = $this->getTableLocator()->get('Comments');
-        $this->comments->setEntityClass(CommentProps::class);
+        $this->comments->setEntityClass(Comment::class);
 
         $this->users = $this->getTableLocator()->get('Users');
-        $this->users->setEntityClass(UserProps::class);
+        $this->users->setEntityClass(User::class);
 
         $this->tags = $this->getTableLocator()->get('Tags');
         $this->tags->setEntityClass(Tag::class);
@@ -334,7 +332,7 @@ class MarshallerTest extends TestCase
         $this->assertFalse($entity->isDirty('article'));
 
         // Ensure consistency with merge()
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'Jenny',
         ]);
         // Make the entity think it is new.
@@ -643,12 +641,12 @@ class MarshallerTest extends TestCase
         );
 
         $this->assertInstanceOf(
-            UserProps::class,
+            User::class,
             $result->tags[0]->_joinData->user,
         );
 
         $this->assertInstanceOf(
-            UserProps::class,
+            User::class,
             $result->tags[1]->_joinData->user,
         );
         $this->assertFalse($result->tags[0]->isNew(), 'Should not be new, as id is in db.');
@@ -884,7 +882,7 @@ class MarshallerTest extends TestCase
     /**
      * Test belongsToMany association with scalars
      *
-     * This generates TypeError: Cannot assign null to property TestApp\Model\Entity\ArticleProps::$tags of type array
+     * This generates TypeError: Cannot assign null to property TestApp\Model\Entity\Article::$tags of type array
      */
     public function testBelongsToManyInvalidData(): void
     {
@@ -1050,7 +1048,7 @@ class MarshallerTest extends TestCase
     /**
      * Test HasMany association with invalid data
      *
-     * This generates TypeError: Cannot assign null to property TestApp\Model\Entity\ArticleProps::$comments of type array
+     * This generates TypeError: Cannot assign null to property TestApp\Model\Entity\Article::$comments of type array
      */
     public function testOneHasManyInvalidData(): void
     {
@@ -1366,7 +1364,7 @@ class MarshallerTest extends TestCase
     public function testMergeWithSameObjectValue(): void
     {
         $created = new DateTime('2020-10-29');
-        $entity = new CommentProps([
+        $entity = new Comment([
             'comment' => 'foo',
             'created' => $created,
         ]);
@@ -1444,7 +1442,7 @@ class MarshallerTest extends TestCase
      */
     public function testMergeWithSingleAssociationAndFields(): void
     {
-        $user = new UserProps([
+        $user = new User([
            'username' => 'user',
         ]);
         $article = new Article([
@@ -1507,7 +1505,7 @@ class MarshallerTest extends TestCase
      */
     public function testMergeWithSingleAssociation(): void
     {
-        $user = new UserProps([
+        $user = new User([
             'username' => 'mark',
             'password' => 'secret',
         ]);
@@ -1572,7 +1570,7 @@ class MarshallerTest extends TestCase
      */
     public function testMergeAssociationNullOut(): void
     {
-        $user = new UserProps([
+        $user = new User([
             'id' => 1,
             'username' => 'user',
         ]);
@@ -1605,9 +1603,9 @@ class MarshallerTest extends TestCase
      */
     public function testMergeMultipleAssociations(): void
     {
-        $user = new UserProps(['username' => 'mark', 'password' => 'secret']);
-        $comment1 = new CommentProps(['id' => 1, 'comment' => 'A comment']);
-        $comment2 = new CommentProps(['id' => 2, 'comment' => 'Another comment']);
+        $user = new User(['username' => 'mark', 'password' => 'secret']);
+        $comment1 = new Comment(['id' => 1, 'comment' => 'A comment']);
+        $comment2 = new Comment(['id' => 2, 'comment' => 'Another comment']);
         $entity = new Article([
             'title' => 'My Title',
             'user' => $user,
@@ -2363,8 +2361,8 @@ class MarshallerTest extends TestCase
     public function testMergeManySimple(): void
     {
         $entities = [
-            new CommentProps(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
-            new CommentProps(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
+            new Comment(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
+            new Comment(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
         ];
         $entities[0]->clean();
         $entities[1]->clean();
@@ -2391,8 +2389,8 @@ class MarshallerTest extends TestCase
     public function testMergeManyInvalidData(): void
     {
         $entities = [
-            new CommentProps(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
-            new CommentProps(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
+            new Comment(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
+            new Comment(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
         ];
         $entities[0]->clean();
         $entities[1]->clean();
@@ -2416,8 +2414,8 @@ class MarshallerTest extends TestCase
     public function testMergeManyWithAppend(): void
     {
         $entities = [
-            new CommentProps(['comment' => 'First post', 'user_id' => 2]),
-            new CommentProps(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
+            new Comment(['comment' => 'First post', 'user_id' => 2]),
+            new Comment(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
         ];
         $entities[0]->clean();
         $entities[1]->clean();
@@ -2472,7 +2470,7 @@ class MarshallerTest extends TestCase
     public function testMergeManyExistingQueryAliases(): void
     {
         $entities = [
-            new CommentProps(['id' => 1, 'comment' => 'First post', 'user_id' => 2], ['markClean' => true]),
+            new Comment(['id' => 1, 'comment' => 'First post', 'user_id' => 2], ['markClean' => true]),
         ];
 
         $data = [
@@ -2494,8 +2492,8 @@ class MarshallerTest extends TestCase
     public function testMergeManyExistQueryFails(): void
     {
         $entities = [
-            new CommentProps(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
-            new CommentProps(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
+            new Comment(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
+            new Comment(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
         ];
         $entities[0]->clean();
         $entities[1]->clean();
@@ -2508,7 +2506,7 @@ class MarshallerTest extends TestCase
         $comments = $this->getTableLocator()->get('GreedyComments', [
             'className' => GreedyCommentsTable::class,
         ]);
-        $comments->setEntityClass(CommentProps::class);
+        $comments->setEntityClass(Comment::class);
         $marshall = new Marshaller($comments);
         $result = $marshall->mergeMany($entities, $data);
 
@@ -2524,7 +2522,7 @@ class MarshallerTest extends TestCase
      */
     public function testMergeComplexType(): void
     {
-        $entity = new CommentProps(
+        $entity = new Comment(
             ['comment' => 'My Comment text'],
             ['markNew' => false, 'markClean' => true],
         );
@@ -2590,7 +2588,7 @@ class MarshallerTest extends TestCase
         $result = $marshall->one($data, ['associated' => ['Users']]);
         $this->assertEmpty($result->getErrors());
         $this->assertSame(1, $result->author_id);
-        $this->assertInstanceOf(UserProps::class, $result->user);
+        $this->assertInstanceOf(User::class, $result->user);
         $this->assertSame('mark', $result->user->username);
 
         $translations = $result->get('_translations');
@@ -2656,8 +2654,8 @@ class MarshallerTest extends TestCase
     public function testMergeManyFields(): void
     {
         $entities = [
-            new CommentProps(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
-            new CommentProps(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
+            new Comment(['id' => 1, 'comment' => 'First post', 'user_id' => 2]),
+            new Comment(['id' => 2, 'comment' => 'Second post', 'user_id' => 2]),
         ];
         $entities[0]->clean();
         $entities[1]->clean();
@@ -2716,7 +2714,7 @@ class MarshallerTest extends TestCase
      */
     public function testMergeAssociationWithfields(): void
     {
-        $user = new UserProps([
+        $user = new User([
             'username' => 'mark',
             'password' => 'secret',
         ]);
@@ -3309,7 +3307,7 @@ class MarshallerTest extends TestCase
         $options = ['markClean' => true, 'isNew' => false];
         $entity = new Article([
             'title' => 'My Title',
-            'user' => new UserProps([
+            'user' => new User([
                 'username' => 'mark',
                 'password' => 'not a secret',
             ], $options),

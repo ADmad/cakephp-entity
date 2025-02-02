@@ -12,7 +12,7 @@ use InvalidArgumentException;
 use Mockery;
 use stdClass;
 use TestApp\Model\Entity\DynamicProps;
-use TestApp\Model\Entity\UserProps;
+use TestApp\Model\Entity\User;
 
 /**
  * Entity test case.
@@ -685,7 +685,7 @@ class EntityTest extends TestCase
     public function testPhpSerialize(): void
     {
         $data = ['username' => 'james', 'password' => 'mypass', 'articles' => ['123', '457']];
-        $entity = new UserProps($data);
+        $entity = new User($data);
         $copy = unserialize(serialize($entity));
         $this->assertInstanceOf(Entity::class, $copy);
         $this->assertEquals($data, $copy->toArray());

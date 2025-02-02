@@ -38,8 +38,8 @@ use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use TestApp\Model\Entity\Article;
 use TestApp\Model\Entity\Author;
-use TestApp\Model\Entity\UserProps;
-use TestApp\Model\Entity\CommentProps;
+use TestApp\Model\Entity\User;
+use TestApp\Model\Entity\Comment;
 use function Cake\I18n\__;
 
 /**
@@ -642,7 +642,7 @@ class HasManyTest extends TestCase
             'targetTable' => $mock,
         ];
 
-        $entity = new UserProps([
+        $entity = new User([
             'username' => 'Mark',
             'email' => 'mark@example.com',
             'articles' => [
@@ -1066,10 +1066,10 @@ class HasManyTest extends TestCase
         $articles->hasMany('Comments');
 
         $comments = $this->getTableLocator()->get('Comments');
-        $comments->setEntityClass(CommentProps::class);
+        $comments->setEntityClass(Comment::class);
 
         $comments->belongsTo('Users');
-        $comments->Users->setEntityClass(UserProps::class);
+        $comments->Users->setEntityClass(User::class);
 
         $rules = $comments->rulesChecker();
         $rules->add($rules->existsIn('user_id', 'Users'));
@@ -1403,7 +1403,7 @@ class HasManyTest extends TestCase
         $articles = $this->getTableLocator()->get('Articles');
         $articles->setEntityClass(Article::class);
         $articles->hasMany('Comments', ['saveStrategy' => HasMany::SAVE_REPLACE]);
-        $articles->Comments->setEntityClass(CommentProps::class);
+        $articles->Comments->setEntityClass(Comment::class);
 
         $article = $articles->newEntity([
             'title' => 'Bakeries are sky rocketing',
@@ -1444,7 +1444,7 @@ class HasManyTest extends TestCase
         $articles = $this->getTableLocator()->get('Articles');
         $articles->setEntityClass(Article::class);
         $articles->hasMany('Comments', ['saveStrategy' => HasMany::SAVE_REPLACE]);
-        $articles->Comments->setEntityClass(CommentProps::class);
+        $articles->Comments->setEntityClass(Comment::class);
 
         $article = $articles->newEntity([
             'title' => 'Bakeries are sky rocketing',
@@ -1500,7 +1500,7 @@ class HasManyTest extends TestCase
                 'Comments.published' => 'Y',
             ],
         ]);
-        $Comments->setEntityClass(CommentProps::class);
+        $Comments->setEntityClass(Comment::class);
 
         $article = $Articles->newEntity([
             'title' => 'Title',

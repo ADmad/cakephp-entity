@@ -408,9 +408,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
-            if ($name == 'foreign_key IS') {
-                dd(\Cake\Error\Debugger::trace());
-            }
             $this->{$name} = $value;
         }
 
@@ -478,6 +475,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         ) {
             $fieldIsPresent = true;
             $value = $this->{$field} ?? null;
+        }
+
+        if (static::class === self::class) {
+            return $value;
         }
 
         if (!$fieldIsPresent) {
@@ -1534,22 +1535,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function setSource(string $alias)
     {
         $this->_registryAlias = $alias;
-
-        return $this;
-    }
-
-    /**
-     * Add fields which can be set dynamically (without requiring a class property).
-     *
-     * @param string|array $fields Fields names.
-     * @return void
-     */
-    public function addDynamicFields(string|array $fields)
-    {
-        $fields = (array)$fields;
-        $fields = array_fill_keys($fields, true);
-
-        $this->allowedDynamicFields += $fields;
 
         return $this;
     }

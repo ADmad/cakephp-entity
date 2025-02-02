@@ -3,9 +3,18 @@ declare(strict_types=1);
 
 namespace TestApp\Model\Entity;
 
-/**
- * Tests entity class used for asserting correct loading
- */
-class Author extends AuthorProps
+use ADmad\Entity\Datasource\Entity;
+
+class Author extends Entity
 {
+    protected int $id;
+    protected string $name;
+    protected array $articles;
+    protected int $total_articles;
+    protected $supervisor;
+    protected array $tags;
+    protected array $site_articles;
+
+    protected $article;
+    protected $blogs;
 }
