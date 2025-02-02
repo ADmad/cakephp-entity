@@ -1,11 +1,4 @@
 # ADmad/Entity plugin for CakePHP
 
-## Installation
-
-You can install this plugin into your CakePHP application using [composer](https://getcomposer.org).
-
-The recommended way to install composer packages is:
-
-```
-composer require admad/entity
-```
+Experimental entity implemention for CakePHP 5.1+ which uses actual class
+properties for fields and property hooks instead of method based accessors/mutators.
