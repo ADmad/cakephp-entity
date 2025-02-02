@@ -15,4 +15,6 @@ class CommentProps extends Entity
     protected string|BackedEnum $published;
     protected $created;
     protected $updated;
+    protected $article;
+    protected $user;
 }

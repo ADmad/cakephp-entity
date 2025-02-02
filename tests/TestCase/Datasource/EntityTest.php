@@ -490,19 +490,21 @@ class EntityTest extends TestCase
      */
     public function testHas(): void
     {
-        $entity = new class (['id' => 1, 'name' => 'Juan', 'foo' => null]) extends Entity {
+        $entity = new class (['id' => 1, 'name' => 'Juan']) extends Entity {
             protected $id;
             protected $name;
             protected $foo;
+            protected string $typed;
         };
         $this->assertTrue($entity->has('id'));
         $this->assertTrue($entity->has('name'));
-        $this->assertTrue($entity->has('foo'));
+        $this->assertFalse($entity->has('foo'));
+        $this->assertFalse($entity->has('typed'));
         $this->assertFalse($entity->has('last_name'));
 
         $this->assertTrue($entity->has(['id']));
         $this->assertTrue($entity->has(['id', 'name']));
-        $this->assertTrue($entity->has(['id', 'foo']));
+        $this->assertFalse($entity->has(['id', 'foo']));
         $this->assertFalse($entity->has(['id', 'nope']));
 
         $entity = new class extends Entity {
@@ -782,6 +784,9 @@ class EntityTest extends TestCase
 
         $entity2->title = 'bar';
         $this->assertTrue($entity2->isDirty('title'));
+
+        $entity = new Entity(['title' => 'foo']);
+        $this->assertTrue($entity->isDirty('title'));
     }
 
     /**
@@ -1595,6 +1600,7 @@ class EntityTest extends TestCase
             '[new]' => true,
             '[accessible]' => ['*' => true, 'id' => false, 'name' => true],
             '[dirty]' => ['somethingElse' => true, 'foo' => true],
+            '[allowedDynamic]' => ['_joinData', '_matchingData', '_locale', '_translations', '_i18n'],
             '[original]' => [],
             '[originalFields]' => ['foo'],
             '[virtual]' => ['baz'],

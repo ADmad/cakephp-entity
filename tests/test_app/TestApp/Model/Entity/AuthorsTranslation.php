@@ -5,9 +5,10 @@ namespace TestApp\Model\Entity;
 
 use ADmad\Entity\Datasource\Entity;
 
-class Section extends Entity
+class ArticlesTranslation extends Entity
 {
+    protected string $locale;
     protected int $id;
     protected ?string $title;
-    protected string $locale;
+    protected ?string $body;
 }

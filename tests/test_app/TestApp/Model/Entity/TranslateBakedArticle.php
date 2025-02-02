@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace TestApp\Model\Entity;
 
+use ADmad\Entity\Datasource\Entity;
 use Cake\ORM\Behavior\Translate\TranslateTrait;
-use Cake\ORM\Entity;
 
 class TranslateBakedArticle extends Entity
 {
@@ -14,4 +14,9 @@ class TranslateBakedArticle extends Entity
         'title' => true,
         'body' => true,
     ];
+
+    protected $id;
+    protected $title;
+    protected $body;
+    protected $locale;
 }

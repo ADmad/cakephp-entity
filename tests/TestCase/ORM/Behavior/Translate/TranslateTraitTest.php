@@ -18,7 +18,7 @@ namespace ADmad\Entity\Test\TestCase\ORM\Behavior\Translate;
 
 use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
-use TestApp\Model\Entity\TranslateTestEntity;
+use TestApp\Model\Entity\TranslateArticle;
 
 /**
  * Translate behavior test case
@@ -30,7 +30,7 @@ class TranslateTraitTest extends TestCase
      */
     public function testTranslationCreate(): void
     {
-        $entity = new TranslateTestEntity();
+        $entity = new TranslateArticle();
         $entity->translation('eng')->set('title', 'My Title');
         $this->assertSame('My Title', $entity->translation('eng')->get('title'));
 
@@ -46,7 +46,7 @@ class TranslateTraitTest extends TestCase
      */
     public function testTranslationModify(): void
     {
-        $entity = new TranslateTestEntity();
+        $entity = new TranslateArticle();
         $entity->set('_translations', [
             'eng' => new Entity(['title' => 'My Title']),
             'spa' => new Entity(['title' => 'Titulo']),
@@ -60,13 +60,13 @@ class TranslateTraitTest extends TestCase
      */
     public function testTranslationEmpty(): void
     {
-        $entity = new TranslateTestEntity();
+        $entity = new TranslateArticle();
         $entity->set('_translations', [
             'eng' => new Entity(['title' => 'My Title']),
             'spa' => new Entity(['title' => 'Titulo']),
         ]);
         $this->assertTrue($entity->translation('pol')->isNew());
-        $this->assertInstanceOf(TranslateTestEntity::class, $entity->translation('pol'));
+        $this->assertInstanceOf(TranslateArticle::class, $entity->translation('pol'));
     }
 
     /**
@@ -76,7 +76,7 @@ class TranslateTraitTest extends TestCase
      */
     public function testTranslationDirty(): void
     {
-        $entity = new TranslateTestEntity();
+        $entity = new TranslateArticle();
         $entity->set('_translations', [
             'eng' => new Entity(['title' => 'My Title']),
             'spa' => new Entity(['title' => 'Titulo']),

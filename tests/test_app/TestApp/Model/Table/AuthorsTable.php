@@ -16,12 +16,15 @@ namespace TestApp\Model\Table;
 
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
+use TestApp\Model\Entity\Author;
 
 /**
  * Author table class
  */
 class AuthorsTable extends Table
 {
+    protected ?string $_entityClass = Author::class;
+
     /**
      * @param array<string, mixed> $config
      * @return void
@@ -56,7 +59,7 @@ class AuthorsTable extends Table
     {
         return $query->formatResults(function ($results) {
             return $results->map(function ($author) {
-                $author->formatted = $author->name . '!!';
+                $author->set('formatted', $author->name . '!!', ['allowDynamic' => true]);
 
                 return $author;
             });

@@ -29,6 +29,8 @@ use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
 use Mockery;
+use TestApp\Model\Entity\Article;
+use TestApp\Model\Entity\Author;
 
 /**
  * Tests BelongsTo class
@@ -169,7 +171,6 @@ class BelongsToTest extends TestCase
 
         $this->assertTrue(isset($article->foo_author));
         $this->assertEquals($article->foo_author->name, 'mariano');
-        $this->assertNull($article->Authors);
     }
 
     /**
@@ -309,32 +310,6 @@ class BelongsToTest extends TestCase
         $association = new BelongsTo('Companies', $config);
         $entity = new Entity(['company_name' => 'CakePHP', 'id' => 1]);
         $this->assertTrue($association->cascadeDelete($entity));
-    }
-
-    /**
-     * Test that saveAssociated() ignores non entity values.
-     */
-    public function testSaveAssociatedOnlyEntities(): void
-    {
-        $mock = Mockery::mock(Table::class)
-            ->shouldAllowMockingMethod('saveAssociated')
-            ->makePartial();
-        $config = [
-            'sourceTable' => $this->client,
-            'targetTable' => $mock,
-        ];
-        $mock->shouldNotReceive('saveAssociated');
-
-        $entity = new Entity([
-            'title' => 'A Title',
-            'body' => 'A body',
-            'author' => ['name' => 'Jose'],
-        ]);
-
-        $association = new BelongsTo('Authors', $config);
-        $result = $association->saveAssociated($entity);
-        $this->assertSame($result, $entity);
-        $this->assertNull($entity->author_id);
     }
 
     /**

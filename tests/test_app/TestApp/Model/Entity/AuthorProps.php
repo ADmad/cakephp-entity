@@ -16,4 +16,5 @@ class AuthorProps extends Entity
     protected array $site_articles;
 
     protected $article;
+    protected $blogs;
 }

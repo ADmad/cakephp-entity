@@ -5,9 +5,9 @@ namespace TestApp\Model\Entity;
 
 use ADmad\Entity\Datasource\Entity;
 
-class Section extends Entity
+class CounterCacheCategory extends Entity
 {
     protected int $id;
-    protected ?string $title;
-    protected string $locale;
+    protected string $name;
+    protected ?int $post_count = null;
 }

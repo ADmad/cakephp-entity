@@ -20,10 +20,10 @@ use AssertionError;
 use Cake\Event\Event;
 use Cake\I18n\DateTime;
 use Cake\ORM\Behavior\TimestampBehavior;
-use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use DateTime as NativeDateTime;
+use TestApp\Model\Entity\Article;
 use UnexpectedValueException;
 
 /**
@@ -89,7 +89,7 @@ class TimestampBehaviorTest extends TestCase
         $this->Behavior->timestamp($ts);
 
         $event = new Event('Model.beforeSave');
-        $entity = new Entity(['name' => 'Foo']);
+        $entity = new Article(['name' => 'Foo']);
 
         $this->Behavior->handleEvent($event, $entity);
         $this->assertInstanceOf(DateTime::class, $entity->created);
@@ -110,7 +110,7 @@ class TimestampBehaviorTest extends TestCase
 
         $event = new Event('Model.beforeSave');
         $existingValue = new NativeDateTime('2011-11-11');
-        $entity = new Entity(['name' => 'Foo', 'created' => $existingValue]);
+        $entity = new Article(['name' => 'Foo', 'created' => $existingValue]);
 
         $this->Behavior->handleEvent($event, $entity);
         $this->assertSame($existingValue, $entity->created, 'Created timestamp is expected to be unchanged');
@@ -129,7 +129,7 @@ class TimestampBehaviorTest extends TestCase
         $this->Behavior->timestamp($ts);
 
         $event = new Event('Model.beforeSave');
-        $entity = new Entity(['name' => 'Foo']);
+        $entity = new Article(['name' => 'Foo']);
         $entity->setNew(false);
 
         $this->Behavior->handleEvent($event, $entity);
@@ -149,7 +149,7 @@ class TimestampBehaviorTest extends TestCase
         $this->Behavior->timestamp($ts);
 
         $event = new Event('Model.beforeSave');
-        $entity = new Entity(['name' => 'Foo']);
+        $entity = new Article(['name' => 'Foo']);
         $entity->setNew(false);
 
         $this->Behavior->handleEvent($event, $entity);
@@ -171,7 +171,7 @@ class TimestampBehaviorTest extends TestCase
 
         $event = new Event('Model.beforeSave');
         $existingValue = new NativeDateTime('2011-11-11');
-        $entity = new Entity(['name' => 'Foo', 'modified' => $existingValue]);
+        $entity = new Article(['name' => 'Foo', 'modified' => $existingValue]);
         $entity->clean();
         $entity->setNew(false);
 
@@ -192,7 +192,7 @@ class TimestampBehaviorTest extends TestCase
         $this->Behavior->timestamp($ts);
 
         $event = new Event('Model.beforeSave');
-        $entity = new Entity(['name' => 'Foo']);
+        $entity = new Article(['name' => 'Foo']);
 
         $this->Behavior->handleEvent($event, $entity);
         $this->assertNull($entity->created);
@@ -208,7 +208,7 @@ class TimestampBehaviorTest extends TestCase
     {
         $table = $this->getTableInstance();
         $this->Behavior = new TimestampBehavior($table);
-        $entity = new Entity();
+        $entity = new Article();
         $event = new Event('Model.beforeSave');
 
         $entity->clean();
@@ -233,7 +233,7 @@ class TimestampBehaviorTest extends TestCase
             ],
         ]);
 
-        $entity = new Entity();
+        $entity = new Article();
         $event = new Event('Model.beforeSave');
         $this->Behavior->handleEvent($event, $entity);
         $this->assertIsString($entity->timestamp_str);
@@ -253,7 +253,7 @@ class TimestampBehaviorTest extends TestCase
         $this->Behavior = new TimestampBehavior($table, $settings);
 
         $event = new Event('Model.beforeSave');
-        $entity = new Entity(['name' => 'Foo']);
+        $entity = new Article(['name' => 'Foo']);
         $this->Behavior->handleEvent($event, $entity);
     }
 
@@ -341,7 +341,7 @@ class TimestampBehaviorTest extends TestCase
         $ts = new NativeDateTime('2000-01-01');
         $this->Behavior->timestamp($ts);
 
-        $entity = new Entity(['username' => 'timestamp test']);
+        $entity = new Article(['username' => 'timestamp test']);
         $return = $this->Behavior->touch($entity);
         $this->assertTrue($return, 'touch is expected to return true if it sets a field value');
         $this->assertSame(
@@ -370,7 +370,7 @@ class TimestampBehaviorTest extends TestCase
         $ts = new NativeDateTime('2000-01-01');
         $this->Behavior->timestamp($ts);
 
-        $entity = new Entity(['username' => 'timestamp test']);
+        $entity = new Article(['username' => 'timestamp test']);
         $return = $this->Behavior->touch($entity);
         $this->assertFalse($return, 'touch is expected to do nothing and return false');
         $this->assertNull($entity->modified, 'Modified field is NOT expected to change');
@@ -388,7 +388,7 @@ class TimestampBehaviorTest extends TestCase
         $ts = new NativeDateTime('2000-01-01');
         $this->Behavior->timestamp($ts);
 
-        $entity = new Entity(['username' => 'timestamp test']);
+        $entity = new Article(['username' => 'timestamp test']);
         $return = $this->Behavior->touch($entity, 'Something.special');
         $this->assertTrue($return, 'touch is expected to return true if it sets a field value');
         $this->assertSame(
@@ -414,7 +414,7 @@ class TimestampBehaviorTest extends TestCase
             ],
         ]);
 
-        $entity = new Entity(['username' => 'timestamp test']);
+        $entity = new Article(['username' => 'timestamp test']);
         $return = $table->save($entity);
         $this->assertSame($entity, $return, 'The returned object is expected to be the same entity object');
 
@@ -440,6 +440,7 @@ class TimestampBehaviorTest extends TestCase
         return new Table([
             'alias' => 'Articles',
             'schema' => $schema,
+            'entityClass' => Article::class,
         ]);
     }
 }

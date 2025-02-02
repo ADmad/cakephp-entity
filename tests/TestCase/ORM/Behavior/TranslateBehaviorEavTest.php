@@ -30,6 +30,9 @@ use Cake\ORM\Locator\TableLocator;
 use Cake\ORM\Query\SelectQuery;
 use Cake\TestSuite\TestCase;
 use Cake\Validation\Validator;
+use TestApp\Model\Entity\Article;
+use TestApp\Model\Entity\I18n as I18nEntity;
+use TestApp\Model\Entity\Section;
 use TestApp\Model\Entity\TranslateArticle;
 use TestApp\Model\Table\CustomI18nTable;
 
@@ -72,6 +75,13 @@ class TranslateBehaviorEavTest extends TestCase
         TranslateBehavior::setDefaultStrategyClass(ShadowTableStrategy::class);
 
         parent::tearDownAfterClass();
+    }
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->fetchTable('I18n')->setEntityClass(I18nEntity::class);
     }
 
     public function tearDown(): void
@@ -148,6 +158,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testFindSingleLocale(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(Article::class);
         $table->addBehavior('Translate', ['fields' => ['title', 'body']]);
 
         $table->setLocale('eng');
@@ -965,6 +976,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testAllowEmptyFalseWithNull(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         $table->addBehavior('Translate', ['fields' => ['title', 'description'], 'allowEmptyTranslations' => false]);
 
         $article = $table->find()->first();
@@ -1183,6 +1195,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testSaveMultipleNewTranslations(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(Article::class);
         $table->addBehavior('Translate', ['fields' => ['title', 'body']]);
         $article = $table->find('translations')->first();
 
@@ -1224,6 +1237,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testSavingWithNonDefaultLocale(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         $table->addBehavior('Translate', ['fields' => ['title', 'body']]);
         $table->setEntityClass(TranslateArticle::class);
         I18n::setLocale('fra');
@@ -1376,6 +1390,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testEmptyTranslations(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         /** @var \Cake\ORM\Table|\Cake\ORM\Behavior\TranslateBehavior $table */
         $table->addBehavior('Translate', [
             'fields' => ['title', 'body', 'description'],
@@ -1474,7 +1489,7 @@ class TranslateBehaviorEavTest extends TestCase
      */
     public function testSaveNewRecordWithOnlyTranslationsNotDefaultLocale(): void
     {
-        $table = $this->getTableLocator()->get('Sections');
+        $table = $this->getTableLocator()->get('Sections')->setEntityClass(Section::class);
         $table->getValidator()->add('title', 'notBlank', ['rule' => 'notBlank']);
         $table->addBehavior('Translate', [
             'fields' => ['title'],
@@ -1606,6 +1621,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testSaveDefaultLocaleFalse(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         $table->addBehavior('Translate', [
             'defaultLocale' => '',
             'fields' => ['title', 'body'],
@@ -1765,6 +1781,7 @@ class TranslateBehaviorEavTest extends TestCase
     public function testBuildMarshalMapBuildEntitiesValidationErrors(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(Article::class);
         $table->addBehavior('Translate', [
             'fields' => ['title', 'body'],
             'validator' => 'custom',

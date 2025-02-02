@@ -9,7 +9,9 @@ use DateTimeImmutable;
 class TagProps extends Entity
 {
     protected int $id;
+    protected string $tag;
     protected string $name;
     protected ?string $description;
     protected string|DateTimeImmutable|null $created;
+    protected $articles;
 }

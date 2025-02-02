@@ -17,12 +17,15 @@ namespace TestApp\Model\Table;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Utility\Text;
+use TestApp\Model\Entity\Article;
 
 /**
  * Article table class
  */
 class ArticlesTable extends Table
 {
+    protected ?string $_entityClass = Article::class;
+
     public function initialize(array $config): void
     {
         $this->belongsTo('Authors');

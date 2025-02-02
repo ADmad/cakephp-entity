@@ -20,9 +20,13 @@ use Cake\Database\Driver\Sqlserver;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
-use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
+use TestApp\Model\Entity\CounterCacheCategory;
+use TestApp\Model\Entity\CounterCacheComment;
+use TestApp\Model\Entity\CounterCachePost;
+use TestApp\Model\Entity\CounterCacheUser;
+use TestApp\Model\Entity\CounterCacheUserCategoryPost;
 use TestApp\Model\Table\PublishedPostsTable;
 
 /**
@@ -84,29 +88,34 @@ class CounterCacheBehaviorTest extends TestCase
         $this->user = $this->getTableLocator()->get('Users', [
             'table' => 'counter_cache_users',
             'connection' => $this->connection,
+            'entityClass' => CounterCacheUser::class,
         ]);
 
         $this->category = $this->getTableLocator()->get('Categories', [
             'table' => 'counter_cache_categories',
             'connection' => $this->connection,
+            'entityClass' => CounterCacheCategory::class,
         ]);
 
         $this->comment = $this->getTableLocator()->get('Comments', [
             'alias' => 'Comment',
             'table' => 'counter_cache_comments',
             'connection' => $this->connection,
+            'entityClass' => CounterCacheComment::class,
         ]);
 
         $this->post = new PublishedPostsTable([
             'alias' => 'Post',
             'table' => 'counter_cache_posts',
             'connection' => $this->connection,
+            'entityClass' => CounterCachePost::class,
         ]);
 
         $this->userCategoryPosts = new Table([
             'alias' => 'UserCategoryPosts',
             'table' => 'counter_cache_user_category_posts',
             'connection' => $this->connection,
+            'entityClass' => CounterCacheUserCategoryPost::class,
         ]);
     }
 
@@ -205,7 +214,7 @@ class CounterCacheBehaviorTest extends TestCase
             ],
         ]);
 
-        $entity = new Entity([
+        $entity = new CounterCachePost([
             'title' => 'Orphan comment',
             'user_id' => null,
         ]);
@@ -565,7 +574,7 @@ class CounterCacheBehaviorTest extends TestCase
             ->where(['title' => 'Rock and Roll'])
             ->first();
         $post = $this->post->patchEntity($post, [
-            'posts_published' => true,
+            // 'posts_published' => true,
             'user' => [
                 'id' => 1,
                 'post_count' => 10,
@@ -606,7 +615,7 @@ class CounterCacheBehaviorTest extends TestCase
             ->where(['title' => 'Rock and Roll'])
             ->first();
         $post = $this->post->patchEntity($post, [
-            'posts_published' => true,
+            // 'posts_published' => true,
             'user' => [
                 'id' => 1,
                 'post_count' => 10,
@@ -623,9 +632,9 @@ class CounterCacheBehaviorTest extends TestCase
     /**
      * Get a new Entity
      */
-    protected function _getEntity(): Entity
+    protected function _getEntity(): CounterCachePost
     {
-        return new Entity([
+        return new CounterCachePost([
             'title' => 'Test 123',
             'user_id' => 1,
         ]);
@@ -634,7 +643,7 @@ class CounterCacheBehaviorTest extends TestCase
     /**
      * Returns entity for user
      */
-    protected function _getUser(int $id = 1): Entity
+    protected function _getUser(int $id = 1): CounterCacheUser
     {
         return $this->user->get($id);
     }
@@ -642,7 +651,7 @@ class CounterCacheBehaviorTest extends TestCase
     /**
      * Returns entity for category
      */
-    protected function _getCategory(int $id = 1): Entity
+    protected function _getCategory(int $id = 1): CounterCacheCategory
     {
         return $this->category->find('all')->where(['id' => $id])->first();
     }

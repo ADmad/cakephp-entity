@@ -165,6 +165,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected array $allowedDynamicFields = [
         '_joinData' => true,
         '_matchingData' => true,
+        '_locale' => true,
+        '_translations' => true,
+        '_i18n' => true,
     ];
 
     /**
@@ -359,7 +362,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if (!is_array($field)) {
             throw new InvalidArgumentException('Cannot set an empty field');
         }
-        $options += ['setter' => true, 'guard' => $guard, 'asOriginal' => false, 'allowDynamic' => false];
+        $options += [
+            'setter' => true,
+            'guard' => $guard,
+            'asOriginal' => false,
+            'allowDynamic' => static::class === self::class ? true : false,
+        ];
 
         if ($options['asOriginal'] === true) {
             $this->setOriginalField(array_keys($field));
@@ -376,9 +384,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 $this->isOriginalField($name) &&
                 !array_key_exists($name, $this->_original) &&
                 in_array($name, $this->propertyFields, true) &&
-                $value !== $this->{$name}
+                $value !== ($this->{$name} ?? null)
             ) {
-                $this->_original[$name] = $this->{$name};
+                $this->_original[$name] = $this->{$name} ?? null;
             }
 
             if (!in_array($name, $this->propertyFields, true)) {
@@ -400,6 +408,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
+            if ($name == 'foreign_key IS') {
+                dd(\Cake\Error\Debugger::trace());
+            }
             $this->{$name} = $value;
         }
 
@@ -418,7 +429,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             isset($this->allowedDynamicFields[$field])
             && !property_exists($this, $field)
         ) {
-            $existing = $this->dynamicFields[$field] ?? $value;
+            $existing = $this->dynamicFields[$field] ?? null;
         } else {
             $existing = $this->{$field} ?? null;
         }
@@ -583,9 +594,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         foreach ((array)$field as $prop) {
             $rp = $this->reflectedProperty($prop);
             if ($rp === null) {
-                return array_key_exists($prop, $this->dynamicFields);
-            } else {
-                if (!$rp->getHook(PropertyHookType::Get) && !$rp->isInitialized($this)) {
+                if (!array_key_exists($prop, $this->dynamicFields)) {
+                    return false;
+                }
+            } elseif (!$rp->getHook(PropertyHookType::Get)) {
+                if (!isset($this->{$prop})) {
                     return false;
                 }
             }
@@ -1526,6 +1539,22 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     }
 
     /**
+     * Add fields which can be set dynamically (without requiring a class property).
+     *
+     * @param string|array $fields Fields names.
+     * @return void
+     */
+    public function addDynamicFields(string|array $fields)
+    {
+        $fields = (array)$fields;
+        $fields = array_fill_keys($fields, true);
+
+        $this->allowedDynamicFields += $fields;
+
+        return $this;
+    }
+
+    /**
      * Get ReflectedProperty instance for a property.
      *
      * @param string $name Property name
@@ -1572,6 +1601,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             '[new]' => $this->isNew(),
             '[accessible]' => $this->_accessible,
             '[dirty]' => $this->_dirty,
+            '[allowedDynamic]' => array_keys($this->allowedDynamicFields),
             '[original]' => $this->_original,
             '[originalFields]' => $this->_originalFields,
             '[virtual]' => $this->_virtual,
