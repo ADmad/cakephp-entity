@@ -307,14 +307,17 @@ class EntityTest extends TestCase
     public function testMissingPropertyException(): void
     {
         $this->expectException(MissingPropertyException::class);
-        $this->expectExceptionMessage('Property `not_present` does not exist for the entity `ADmad\Entity\Datasource\Entity`');
+        $this->expectExceptionMessage('Property `not_present` does not exist for the entity');
 
-        $entity = new Entity();
+        $entity = $entity = new class (['is_present' => null]) extends Entity {};
         $entity->get('not_present');
     }
 
     public function testNoMissingPropertyException(): void
     {
+        $entity = new Entity();
+        $this->assertNull($entity->get('not_present'));
+
         $entity = new class (['is_present' => null]) extends Entity {
             protected ?bool $is_present;
         };
@@ -732,12 +735,17 @@ class EntityTest extends TestCase
 
         $expected = [];
         $this->assertEquals($expected, $entity->extract([]));
+
+        $expected = ['craziness' => null];
+        $entity = new Entity();
+        $this->assertEquals($expected, $entity->extract(['craziness']));
     }
 
     public function testExtractNonExistent(): void
     {
         $this->expectException(MissingPropertyException::class);
-        $entity = new Entity();
+
+        $entity = new class extends Entity {};
         $entity->extract(['craziness']);
     }
 
