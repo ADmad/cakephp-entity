@@ -28,6 +28,7 @@ use Cake\ORM\Query;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use Mockery;
+use TestApp\Model\Entity\Article;
 
 /**
  * Tests HasOne class
@@ -380,7 +381,7 @@ class HasOneTest extends TestCase
         $association = $Authors->hasOne('Articles', $config);
 
         // create article with null foreign key
-        $entity = new Entity(['author_id' => null, 'title' => 'this has no author', 'body' => 'I am abandoned', 'published' => 'N']);
+        $entity = new Article(['author_id' => null, 'title' => 'this has no author', 'body' => 'I am abandoned', 'published' => 'N']);
         $Articles->save($entity);
 
         // get author with null binding key

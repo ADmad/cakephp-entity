@@ -24,6 +24,7 @@ use Cake\I18n\I18n;
 use Cake\ORM\Behavior\Translate\ShadowTableStrategy;
 use Cake\ORM\Behavior\TranslateBehavior;
 use Cake\Utility\Hash;
+use TestApp\Model\Entity\ArticlesTranslation;
 use TestApp\Model\Entity\TranslateArticle;
 use TestApp\Model\Entity\TranslateBakedArticle;
 
@@ -68,6 +69,13 @@ class TranslateBehaviorShadowTableTest extends TranslateBehaviorEavTest
         parent::tearDownAfterClass();
 
         TranslateBehavior::setDefaultStrategyClass(ShadowTableStrategy::class);
+    }
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->fetchTable('ArticlesTranslations')->setEntityClass(ArticlesTranslation::class);
     }
 
     /**
@@ -700,6 +708,7 @@ class TranslateBehaviorShadowTableTest extends TranslateBehaviorEavTest
     public function testEmptyTranslationsDefaultBehavior(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         $table->addBehavior('Translate');
         $table->setLocale('zzz');
         $result = $table->get(1);
@@ -715,6 +724,7 @@ class TranslateBehaviorShadowTableTest extends TranslateBehaviorEavTest
     public function testEmptyTranslations(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         $table->addBehavior('Translate', [
             'allowEmptyTranslations' => false,
         ]);
@@ -975,6 +985,7 @@ class TranslateBehaviorShadowTableTest extends TranslateBehaviorEavTest
     public function testAllowEmptyFalseWithNull(): void
     {
         $table = $this->getTableLocator()->get('Articles');
+        $table->setEntityClass(TranslateArticle::class);
         $table->addBehavior('Translate', ['fields' => ['title', 'description'], 'allowEmptyTranslations' => false]);
 
         $article = $table->find()->first();

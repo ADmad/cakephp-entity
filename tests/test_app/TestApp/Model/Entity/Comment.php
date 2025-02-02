@@ -6,7 +6,7 @@ namespace TestApp\Model\Entity;
 use ADmad\Entity\Datasource\Entity;
 use BackedEnum;
 
-class CommentProps extends Entity
+class Comment extends Entity
 {
     protected int $id;
     protected int $article_id;
@@ -15,4 +15,6 @@ class CommentProps extends Entity
     protected string|BackedEnum $published;
     protected $created;
     protected $updated;
+    protected $article;
+    protected $user;
 }

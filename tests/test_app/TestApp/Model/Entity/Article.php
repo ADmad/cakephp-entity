@@ -3,16 +3,32 @@ declare(strict_types=1);
 
 namespace TestApp\Model\Entity;
 
-use Cake\ORM\Entity;
+use ADmad\Entity\Datasource\Entity;
+use BackedEnum;
+use DateTimeInterface;
 
-/**
- * Tests entity class used for asserting correct loading
- */
 class Article extends Entity
 {
-    /**
-     * Testing stub method.
-     */
+    protected ?int $id;
+    protected ?int $author_id;
+    protected $user_id;
+    protected string $title;
+    protected ?string $body;
+    protected string|BackedEnum $published;
+    protected ?DateTimeInterface $created;
+    protected ?DateTimeInterface $modified;
+    protected ?DateTimeInterface $updated;
+    protected ?DateTimeInterface $date_specialed;
+    protected array $tags;
+    protected ?Author $author;
+    protected array $comments;
+    protected array $unaproved_comments;
+    protected $article;
+    protected $not_in_schema;
+
+    protected $comments_notype;
+    protected $user;
+
     public function isRequired(): bool
     {
         return true;

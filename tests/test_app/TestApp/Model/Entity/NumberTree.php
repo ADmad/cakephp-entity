@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace TestApp\Model\Entity;
 
+use ADmad\Entity\Datasource\Entity;
 use Cake\ORM\Behavior\Translate\TranslateTrait;
-use Cake\ORM\Entity;
 
 /**
  * Stub entity class
@@ -12,4 +12,12 @@ use Cake\ORM\Entity;
 class NumberTree extends Entity
 {
     use TranslateTrait;
+
+    protected int $id;
+    protected string $name;
+    protected ?int $parent_id = null;
+    protected int $lft;
+    protected int $rght;
+    protected ?int $depth;
+    protected array $children;
 }

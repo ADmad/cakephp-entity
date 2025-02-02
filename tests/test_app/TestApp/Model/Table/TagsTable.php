@@ -17,12 +17,15 @@ namespace TestApp\Model\Table;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Utility\Text;
+use TestApp\Model\Entity\Tag;
 
 /**
  * Tag table class
  */
 class TagsTable extends Table
 {
+    protected ?string $_entityClass = Tag::class;
+
     public function initialize(array $config): void
     {
         $this->belongsTo('Authors');

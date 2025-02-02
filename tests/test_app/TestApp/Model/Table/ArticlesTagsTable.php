@@ -15,12 +15,15 @@ declare(strict_types=1);
 namespace TestApp\Model\Table;
 
 use Cake\ORM\Table;
+use TestApp\Model\Entity\ArticlesTag;
 
 /**
  * Tag table class
  */
 class ArticlesTagsTable extends Table
 {
+    protected ?string $_entityClass = ArticlesTag::class;
+
     public function initialize(array $config): void
     {
         $this->belongsTo('Articles');

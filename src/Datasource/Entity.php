@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace ADmad\Entity\Datasource;
 
 use Cake\Collection\Collection;
+use Cake\Core\Exception\CakeException;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\InvalidPropertyInterface;
@@ -34,16 +35,7 @@ use ReflectionProperty;
  * magic methods, so the properties must be declared as protected/private causing
  * `__get()`, `__set()` etc. to be triggered.
  *
- * While defining the properties in the entity class is the *highly* recommended,
- * you can set the `\AllowDynamicProperties` attribute for the class to allow
- * dynamic property creation. But bear in mind that such properties will have `public`
- * visibility, hence all features of the entity class may not work as expected.
- *
- * Fallback to the same behavior as Cake\ORM\Entity can be achieved by setting the
- * `$enableBackwardCompatibility` static property to `true` or setting the instance
- * property `$backwardsCompEnabled` to `true`.
- *
- * Differences from Cake\ORM\Entity (when fallback mode is disabled):
+ * Differences from Cake\ORM\Entity:
  *
  * - Method based mutators and accessors are not used, instead property hooks are used.
  * - `useSetter` option has no affect as PHP doesn't allow bypassing the `set`
@@ -67,13 +59,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      * @var array<string>
      */
     protected array $propertyFields = [];
-
-    /**
-     * Holds all fields and their values for this entity.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $_fields = [];
 
     /**
      * Holds all fields that have been changed and their original values for this entity.
@@ -173,16 +158,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected bool $_hasBeenVisited = false;
 
     /**
-     * Whether the presence of a field is checked when accessing a property.
-     *
-     * If disabled no exception will be thrown when trying to access a non-existent property.
-     * You will have to add the #[\AllowDynamicProperties] attribute to your entity class.
-     *
-     * @var bool
-     */
-    protected bool $requireFieldPresence = true;
-
-    /**
      * List of fields that can be dynamically set in this entity.
      *
      * @var array<string, true>
@@ -190,6 +165,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected array $allowedDynamicFields = [
         '_joinData' => true,
         '_matchingData' => true,
+        '_locale' => true,
+        '_translations' => true,
+        '_i18n' => true,
     ];
 
     /**
@@ -198,23 +176,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      * @var array<array-key, mixed>
      */
     protected array $dynamicFields = [];
-
-    /**
-     * Whether to backward compatibility behavior which does not require concrete
-     * properties to be defined in the entity class.
-     *
-     * This is used as the default value for all entities.
-     *
-     * @var bool
-     */
-    public static bool $enableBackwardCompatibility = false;
-
-    /**
-     * Whether backwards compatible behavior is enabled for this entity instance.
-     *
-     * @var bool
-     */
-    protected bool $backwardsCompEnabled;
 
     /**
      * Initializes the internal properties of this entity out of the
@@ -237,14 +198,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function __construct(array $fields = [], array $options = [])
     {
-        $this->backwardsCompEnabled ??= static::$enableBackwardCompatibility;
-
         $options += [
             'useSetters' => true,
             'markClean' => false,
             'markNew' => null,
             'guard' => false,
             'source' => null,
+            'allowDynamic' => true,
         ];
 
         if ($options['source'] !== null) {
@@ -261,6 +221,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $this->set($fields, [
                 'setter' => $options['useSetters'],
                 'guard' => $options['guard'],
+                'allowDynamic' => $options['allowDynamic'],
             ]);
         }
 
@@ -301,19 +262,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function __isset(string $field): bool
     {
-        if ($this->requireFieldPresence) {
-            if (isset($this->allowedDynamicFields[$field])) {
-                if (array_key_exists($field, $this->dynamicFields)) {
-                    return isset($this->dynamicFields[$field]);
-                }
-
-                return property_exists($this, $field) && isset($this->{$field});
+        if (isset($this->allowedDynamicFields[$field])) {
+            if (array_key_exists($field, $this->dynamicFields)) {
+                return isset($this->dynamicFields[$field]);
             }
-
-            return isset($this->{$field});
         }
 
-        return $this->get($field) !== null;
+        return isset($this->{$field});
     }
 
     /**
@@ -407,7 +362,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if (!is_array($field)) {
             throw new InvalidArgumentException('Cannot set an empty field');
         }
-        $options += ['setter' => true, 'guard' => $guard, 'asOriginal' => false];
+        $options += [
+            'setter' => true,
+            'guard' => $guard,
+            'asOriginal' => false,
+            'allowDynamic' => static::class === self::class ? true : false,
+        ];
 
         if ($options['asOriginal'] === true) {
             $this->setOriginalField(array_keys($field));
@@ -420,54 +380,70 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
-            $this->setDirty($name, true);
-
-            if ($this->backwardsCompEnabled && $options['setter']) {
-                $setter = static::_accessor($name, 'set');
-                if ($setter) {
-                    $value = $this->{$setter}($value);
-                }
-            }
-
-            if ($this->backwardsCompEnabled) {
-                if (
-                    $this->isOriginalField($name) &&
-                    !array_key_exists($name, $this->_original) &&
-                    array_key_exists($name, $this->_fields) &&
-                    $value !== $this->_fields[$name]
-                ) {
-                    $this->_original[$name] = $this->_fields[$name];
-                }
-            } else {
-                if (
-                    $this->isOriginalField($name) &&
-                    !array_key_exists($name, $this->_original) &&
-                    in_array($name, $this->propertyFields, true) &&
-                    $value !== $this->{$name}
-                ) {
-                    $this->_original[$name] = $this->{$name};
-                }
+            if (
+                $this->isOriginalField($name) &&
+                !array_key_exists($name, $this->_original) &&
+                in_array($name, $this->propertyFields, true) &&
+                $value !== ($this->{$name} ?? null)
+            ) {
+                $this->_original[$name] = $this->{$name} ?? null;
             }
 
             if (!in_array($name, $this->propertyFields, true)) {
                 $this->propertyFields[] = $name;
             }
 
-            if ($this->backwardsCompEnabled) {
-                $this->_fields[$name] = $value;
-            } else {
-                if (
-                    isset($this->allowedDynamicFields[$name])
-                    && !property_exists($this, $name)
-                ) {
-                    $this->dynamicFields[$name] = $value;
-                } else {
-                    $this->{$name} = $value;
-                }
+            $propExists = property_exists($this, $name);
+
+            if (!$propExists && $options['allowDynamic']) {
+                $this->allowedDynamicFields[$name] = true;
             }
+
+            if ($this->isModified($name, $value)) {
+                $this->setDirty($name, true);
+            }
+
+            if (!$propExists && isset($this->allowedDynamicFields[$name])) {
+                $this->dynamicFields[$name] = $value;
+                continue;
+            }
+
+            $this->{$name} = $value;
         }
 
         return $this;
+    }
+
+    /**
+     * Check if the provided value is same as existing value for a field.
+     *
+     * @param string $field The field to check.
+     * @return bool
+     */
+    protected function isModified(string $field, mixed $value): bool
+    {
+        if (
+            isset($this->allowedDynamicFields[$field])
+            && !property_exists($this, $field)
+        ) {
+            $existing = $this->dynamicFields[$field] ?? null;
+        } else {
+            $existing = $this->{$field} ?? null;
+        }
+
+        if (($value === null || is_scalar($value)) && $existing === $value) {
+            return false;
+        }
+
+        if (
+            is_object($value)
+            && !($value instanceof EntityInterface)
+            && $existing == $value
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -486,20 +462,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         $value = null;
         $fieldIsPresent = false;
 
-        if ($this->backwardsCompEnabled) {
-            if (array_key_exists($field, $this->_fields)) {
-                $fieldIsPresent = true;
-                $value = &$this->_fields[$field];
-            }
-
-            $method = static::_accessor($field, 'get');
-            if ($method) {
-                // Must be variable before returning: Only variable references should be returned by reference.
-                $result = $this->{$method}($value);
-
-                return $result;
-            }
-        } elseif (isset($this->allowedDynamicFields[$field])) {
+        if (isset($this->allowedDynamicFields[$field])) {
             $fieldIsPresent = true;
             if (array_key_exists($field, $this->dynamicFields)) {
                 $value = &$this->dynamicFields[$field];
@@ -514,7 +477,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $value = $this->{$field} ?? null;
         }
 
-        if (!$fieldIsPresent && $this->requireFieldPresence) {
+        if (static::class === self::class) {
+            return $value;
+        }
+
+        if (!$fieldIsPresent) {
             throw new MissingPropertyException([
                 'property' => $field,
                 'entity' => $this::class,
@@ -533,7 +500,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function requireFieldPresence(bool $value = true): void
     {
-        $this->requireFieldPresence = $value;
+        throw new CakeException(
+            'requireFieldPresence() is not supported in this class as use of actual properties is required.'
+        );
     }
 
     /**
@@ -585,9 +554,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 !in_array($key, $originalKeys, true) &&
                 $this->isOriginalField($key)
             ) {
-                $originals[$key] = $this->backwardsCompEnabled
-                    ? $this->_fields[$key]
-                    : $this->{$key};
+                $originals[$key] = $this->{$key};
             }
         }
 
@@ -626,21 +593,14 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function has(array|string $field): bool
     {
         foreach ((array)$field as $prop) {
-            if ($this->backwardsCompEnabled) {
-                if (
-                    !array_key_exists($prop, $this->_fields)
-                    && !static::_accessor($prop, 'get')
-                ) {
+            $rp = $this->reflectedProperty($prop);
+            if ($rp === null) {
+                if (!array_key_exists($prop, $this->dynamicFields)) {
                     return false;
                 }
-            } else {
-                $rp = $this->reflectedProperty($prop);
-                if ($rp === null) {
-                    return array_key_exists($prop, $this->dynamicFields);
-                } else {
-                    if (!$rp->getHook(PropertyHookType::Get) && !$rp->isInitialized($this)) {
-                        return false;
-                    }
+            } elseif (!$rp->getHook(PropertyHookType::Get)) {
+                if (!isset($this->{$prop})) {
+                    return false;
                 }
             }
         }
@@ -717,25 +677,23 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         $field = (array)$field;
         foreach ($field as $p) {
-            unset($this->dynamicFields[$p], $this->_fields[$p], $this->_dirty[$p]);
+            unset($this->dynamicFields[$p], $this->_dirty[$p]);
 
             $pos = array_search($p, $this->propertyFields, true);
             if ($pos !== false) {
                 unset($this->propertyFields[$pos]);
             }
 
-            if (!$this->backwardsCompEnabled) {
-                $rp = $this->reflectedProperty($p);
-                if ($rp === null) {
-                    continue;
-                }
+            $rp = $this->reflectedProperty($p);
+            if ($rp === null) {
+                continue;
+            }
 
-                if ($rp->getHooks()) {
-                    $this->{$p} = null;
-                    continue;
-                } else {
-                    unset($this->{$p});
-                }
+            if ($rp->getHooks()) {
+                $this->{$p} = null;
+                continue;
+            } else {
+                unset($this->{$p});
             }
         }
 
@@ -1193,9 +1151,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         $this->_hasBeenVisited = true;
         try {
             foreach ($this->propertyFields as $field) {
-                $value = $this->backwardsCompEnabled
-                    ? $this->_fields[$field]
-                    : $this->{$field};
+                $value = $this->{$field};
 
                 if ($this->_readHasErrors($value)) {
                     return true;
@@ -1223,9 +1179,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         $diff = array_diff_key($this->propertyFields, array_keys($this->_errors));
         $values = [];
         foreach ($diff as $field) {
-            $values[$field] = $this->backwardsCompEnabled
-                ? $this->_fields[$field]
-                : $this->{$field};
+            $values[$field] = $this->{$field};
         }
 
         $this->_hasBeenVisited = true;
@@ -1618,15 +1572,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function __debugInfo(): array
     {
-        if ($this->backwardsCompEnabled) {
-            $fields = $this->_fields;
-        } else {
-            $fields = [];
-            foreach ($this->propertyFields as $field) {
-                $fields[$field] = $this->{$field};
-            }
-            $fields += $this->dynamicFields;
+        $fields = [];
+        foreach ($this->propertyFields as $field) {
+            $fields[$field] = $this->{$field};
         }
+        $fields += $this->dynamicFields;
 
         foreach ($this->_virtual as $field) {
             $fields[$field] = $this->{$field};
@@ -1636,6 +1586,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             '[new]' => $this->isNew(),
             '[accessible]' => $this->_accessible,
             '[dirty]' => $this->_dirty,
+            '[allowedDynamic]' => array_keys($this->allowedDynamicFields),
             '[original]' => $this->_original,
             '[originalFields]' => $this->_originalFields,
             '[virtual]' => $this->_virtual,

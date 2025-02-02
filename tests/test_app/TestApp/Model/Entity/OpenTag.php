@@ -3,12 +3,10 @@ declare(strict_types=1);
 
 namespace TestApp\Model\Entity;
 
-use Cake\ORM\Entity;
-
 /**
  * Test entity for mass assignment.
  */
-class OpenTag extends Entity
+class OpenTag extends Tag
 {
     protected array $_accessible = [
         'tag' => true,

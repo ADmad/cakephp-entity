@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ADmad\Entity\Test\TestCase\Datasource;
 
 use ADmad\Entity\Datasource\Entity;
+use Cake\Core\Exception\CakeException;
 use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\TestSuite\TestCase;
 use Exception;
@@ -11,7 +12,7 @@ use InvalidArgumentException;
 use Mockery;
 use stdClass;
 use TestApp\Model\Entity\DynamicProps;
-use TestApp\Model\Entity\UserProps;
+use TestApp\Model\Entity\User;
 
 /**
  * Entity test case.
@@ -73,9 +74,7 @@ class EntityTest extends TestCase
     {
         // This class has \AllowDynamicProperties annotation
         $entity = new DynamicProps();
-        $entity->requireFieldPresence(false);
 
-        $this->assertNull($entity->get('name'));
         $this->assertFalse($entity->has('name'));
 
         $entity->set('name', 'ADmad');
@@ -266,9 +265,9 @@ class EntityTest extends TestCase
             ->with(
                 ...self::withConsecutive(
                     [
-                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true],
+                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true, 'allowDynamic' => true],
                     ],
-                    [['foo' => 'bar'], ['guard' => false, 'setter' => true]],
+                    [['foo' => 'bar'], ['guard' => false, 'setter' => true, 'allowDynamic' => true]],
                 ),
             );
 
@@ -288,7 +287,7 @@ class EntityTest extends TestCase
             ->getMock();
         $entity->expects($this->once())
             ->method('set')
-            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true]);
+            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true, 'allowDynamic' => true]);
         $entity->__construct(['foo' => 'bar'], ['guard' => true]);
     }
 
@@ -305,23 +304,23 @@ class EntityTest extends TestCase
         $this->assertSame('bar', $entity->get('foo'));
     }
 
-    public function testRequirePresenceException(): void
+    public function testMissingPropertyException(): void
     {
         $this->expectException(MissingPropertyException::class);
-        $this->expectExceptionMessage('Property `not_present` does not exist for the entity `ADmad\Entity\Datasource\Entity`');
+        $this->expectExceptionMessage('Property `not_present` does not exist for the entity');
 
-        $entity = new Entity();
-        $entity->requireFieldPresence();
+        $entity = $entity = new class (['is_present' => null]) extends Entity {};
         $entity->get('not_present');
     }
 
-    public function testRequirePresenceNoException(): void
+    public function testNoMissingPropertyException(): void
     {
+        $entity = new Entity();
+        $this->assertNull($entity->get('not_present'));
+
         $entity = new class (['is_present' => null]) extends Entity {
             protected ?bool $is_present;
-            protected string $bonus;
         };
-        $entity->requireFieldPresence();
         $this->assertNull($entity->get('is_present'));
 
         $entity = new class extends Entity
@@ -334,7 +333,6 @@ class EntityTest extends TestCase
                 get => 'bonus';
             }
         };
-        $entity->requireFieldPresence();
         $this->assertSame('bonus', $entity->get('bonus'));
     }
 
@@ -375,15 +373,15 @@ class EntityTest extends TestCase
     public function testGetCacheClearedByUnset(): void
     {
         $entity = new class extends Entity {
-            protected ?string $name {
-                get => 'Dr. ' . $this->name;
+            protected ?string $name = null {
+                get => $this->name ? 'Dr. ' . $this->name : null;
             }
         };
         $entity->set('name', 'Jones');
         $this->assertSame('Dr. Jones', $entity->get('name'));
 
         $entity->unset('name');
-        $this->assertSame('Dr. ', $entity->get('name'));
+        $this->assertNull($entity->get('name'));
     }
 
     /**
@@ -495,19 +493,21 @@ class EntityTest extends TestCase
      */
     public function testHas(): void
     {
-        $entity = new class (['id' => 1, 'name' => 'Juan', 'foo' => null]) extends Entity {
+        $entity = new class (['id' => 1, 'name' => 'Juan']) extends Entity {
             protected $id;
             protected $name;
             protected $foo;
+            protected string $typed;
         };
         $this->assertTrue($entity->has('id'));
         $this->assertTrue($entity->has('name'));
-        $this->assertTrue($entity->has('foo'));
+        $this->assertFalse($entity->has('foo'));
+        $this->assertFalse($entity->has('typed'));
         $this->assertFalse($entity->has('last_name'));
 
         $this->assertTrue($entity->has(['id']));
         $this->assertTrue($entity->has(['id', 'name']));
-        $this->assertTrue($entity->has(['id', 'foo']));
+        $this->assertFalse($entity->has(['id', 'foo']));
         $this->assertFalse($entity->has(['id', 'nope']));
 
         $entity = new class extends Entity {
@@ -688,7 +688,7 @@ class EntityTest extends TestCase
     public function testPhpSerialize(): void
     {
         $data = ['username' => 'james', 'password' => 'mypass', 'articles' => ['123', '457']];
-        $entity = new UserProps($data);
+        $entity = new User($data);
         $copy = unserialize(serialize($entity));
         $this->assertInstanceOf(Entity::class, $copy);
         $this->assertEquals($data, $copy->toArray());
@@ -735,12 +735,17 @@ class EntityTest extends TestCase
 
         $expected = [];
         $this->assertEquals($expected, $entity->extract([]));
+
+        $expected = ['craziness' => null];
+        $entity = new Entity();
+        $this->assertEquals($expected, $entity->extract(['craziness']));
     }
 
     public function testExtractNonExistent(): void
     {
         $this->expectException(MissingPropertyException::class);
-        $entity = new Entity();
+
+        $entity = new class extends Entity {};
         $entity->extract(['craziness']);
     }
 
@@ -787,6 +792,9 @@ class EntityTest extends TestCase
 
         $entity2->title = 'bar';
         $this->assertTrue($entity2->isDirty('title'));
+
+        $entity = new Entity(['title' => 'foo']);
+        $this->assertTrue($entity->isDirty('title'));
     }
 
     /**
@@ -819,17 +827,17 @@ class EntityTest extends TestCase
     public function testDirtyChangingProperties(): void
     {
         $entity = new class (['title' => 'Foo']) extends Entity {
-            protected $title;
-            protected $something;
+            protected string $title;
+            protected string $something;
         };
 
         $entity->setDirty('title', false);
         $this->assertFalse($entity->isDirty('title'));
 
         $entity->set('title', 'Foo');
-        $this->assertTrue($entity->isDirty('title'));
+        $this->assertFalse($entity->isDirty('title'));
 
-        $entity->set('title', 'Foo');
+        $entity->set('title', 'Bar');
         $this->assertTrue($entity->isDirty('title'));
 
         $entity->set('something', 'else');
@@ -965,6 +973,12 @@ class EntityTest extends TestCase
         $mock = Mockery::mock(Entity::class)->makePartial();
         $mock->shouldReceive('setNew')->once();
         $mock->__construct([], ['markNew' => true]);
+    }
+
+    public function testConstructorWithDynamicField(): void
+    {
+        $entiy = new Entity(['foo' => 'bar']);
+        $this->assertSame('bar', $entiy->foo);
     }
 
     /**
@@ -1594,6 +1608,7 @@ class EntityTest extends TestCase
             '[new]' => true,
             '[accessible]' => ['*' => true, 'id' => false, 'name' => true],
             '[dirty]' => ['somethingElse' => true, 'foo' => true],
+            '[allowedDynamic]' => ['_joinData', '_matchingData', '_locale', '_translations', '_i18n'],
             '[original]' => [],
             '[originalFields]' => ['foo'],
             '[virtual]' => ['baz'],
@@ -1933,5 +1948,11 @@ class EntityTest extends TestCase
         $secondEntity->set('parent', $entity);
 
         $this->assertFalse($entity->hasErrors());
+    }
+
+    public function testRequireFieldPresence()
+    {
+        $this->expectException(CakeException::class);
+        (new Entity())->requireFieldPresence(true);
     }
 }

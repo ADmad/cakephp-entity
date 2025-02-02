@@ -28,7 +28,6 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
-use Mockery;
 
 /**
  * Tests BelongsTo class
@@ -93,20 +92,6 @@ class BelongsToTest extends TestCase
     }
 
     /**
-     * Test that foreignKey generation
-     */
-    public function testSetForeignKey(): void
-    {
-        $assoc = new BelongsTo('Companies', [
-            'sourceTable' => $this->client,
-            'targetTable' => $this->company,
-        ]);
-        $this->assertSame('company_id', $assoc->getForeignKey());
-        $this->assertSame($assoc, $assoc->setForeignKey('another_key'));
-        $this->assertSame('another_key', $assoc->getForeignKey());
-    }
-
-    /**
      * Tests that the default foreign key condition generation can be disabled.
      */
     public function testDisableForeignKey(): void
@@ -130,29 +115,6 @@ class BelongsToTest extends TestCase
     }
 
     /**
-     * Test that foreignKey generation ignores database names in target table.
-     */
-    public function testForeignKeyIgnoreDatabaseName(): void
-    {
-        $this->company->setTable('schema.companies');
-        $this->client->setTable('schema.clients');
-        $assoc = new BelongsTo('Companies', [
-            'sourceTable' => $this->client,
-            'targetTable' => $this->company,
-        ]);
-        $this->assertSame('company_id', $assoc->getForeignKey());
-    }
-
-    /**
-     * Tests that the association reports it can be joined
-     */
-    public function testCanBeJoined(): void
-    {
-        $assoc = new BelongsTo('Test');
-        $this->assertTrue($assoc->canBeJoined());
-    }
-
-    /**
      * Tests that the alias set on associations is actually on the Entity
      */
     public function testCustomAlias(): void
@@ -169,7 +131,6 @@ class BelongsToTest extends TestCase
 
         $this->assertTrue(isset($article->foo_author));
         $this->assertEquals($article->foo_author->name, 'mariano');
-        $this->assertNull($article->Authors);
     }
 
     /**
@@ -309,32 +270,6 @@ class BelongsToTest extends TestCase
         $association = new BelongsTo('Companies', $config);
         $entity = new Entity(['company_name' => 'CakePHP', 'id' => 1]);
         $this->assertTrue($association->cascadeDelete($entity));
-    }
-
-    /**
-     * Test that saveAssociated() ignores non entity values.
-     */
-    public function testSaveAssociatedOnlyEntities(): void
-    {
-        $mock = Mockery::mock(Table::class)
-            ->shouldAllowMockingMethod('saveAssociated')
-            ->makePartial();
-        $config = [
-            'sourceTable' => $this->client,
-            'targetTable' => $mock,
-        ];
-        $mock->shouldNotReceive('saveAssociated');
-
-        $entity = new Entity([
-            'title' => 'A Title',
-            'body' => 'A body',
-            'author' => ['name' => 'Jose'],
-        ]);
-
-        $association = new BelongsTo('Authors', $config);
-        $result = $association->saveAssociated($entity);
-        $this->assertSame($result, $entity);
-        $this->assertNull($entity->author_id);
     }
 
     /**

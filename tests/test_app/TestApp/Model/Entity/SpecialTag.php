@@ -5,10 +5,13 @@ namespace TestApp\Model\Entity;
 
 use ADmad\Entity\Datasource\Entity;
 
-class ArticlesTagProps extends Entity
+class SpecialTag extends Entity
 {
+    protected $id;
     protected int $article_id;
     protected int $tag_id;
-    protected array $tags;
     protected $highlighted;
+    protected $highlighted_time;
+    protected $extra_info;
+    protected $author_id;
 }

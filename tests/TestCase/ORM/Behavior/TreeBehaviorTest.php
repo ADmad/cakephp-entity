@@ -18,8 +18,10 @@ namespace ADmad\Entity\Test\TestCase\ORM\Behavior;
 
 use Cake\Database\Exception\DatabaseException;
 use Cake\Datasource\Exception\RecordNotFoundException;
-use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
+use TestApp\Model\Entity\MenuLinkTree;
+use TestApp\Model\Entity\NumberTree;
+use TestApp\Model\Entity\NumberTreesArticle;
 
 /**
  * Translate behavior test case
@@ -45,9 +47,13 @@ class TreeBehaviorTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->table = $this->getTableLocator()->get('NumberTrees');
-        $this->table->setPrimaryKey(['id']);
+
+        $this->table = $this->getTableLocator()->get('NumberTrees')
+            ->setPrimaryKey(['id'])
+            ->setEntityClass(NumberTree::class);
         $this->table->addBehavior('Tree');
+
+        $this->getTableLocator()->get('MenuLinkTrees')->setEntityClass(MenuLinkTree::class);
     }
 
     /**
@@ -732,7 +738,7 @@ class TreeBehaviorTest extends TestCase
     public function testAddOrphan(): void
     {
         $table = $this->table;
-        $entity = new Entity(
+        $entity = new NumberTree(
             ['name' => 'New Orphan', 'parent_id' => null, 'level' => null],
             ['markNew' => true],
         );
@@ -763,7 +769,7 @@ class TreeBehaviorTest extends TestCase
     public function testAddMiddle(): void
     {
         $table = $this->table;
-        $entity = new Entity(
+        $entity = new NumberTree(
             ['name' => 'laptops', 'parent_id' => 1],
             ['markNew' => true],
         );
@@ -794,7 +800,7 @@ class TreeBehaviorTest extends TestCase
     public function testAddLeaf(): void
     {
         $table = $this->table;
-        $entity = new Entity(
+        $entity = new NumberTree(
             ['name' => 'laptops', 'parent_id' => 2],
             ['markNew' => true],
         );
@@ -828,10 +834,10 @@ class TreeBehaviorTest extends TestCase
 
         //First add a child to the empty root element
         $alien = $table->find()->where(['name' => 'alien hardware'])->first();
-        $entity = new Entity(['name' => 'plasma rifle', 'parent_id' => $alien->id], ['markNew' => true]);
+        $entity = new NumberTree(['name' => 'plasma rifle', 'parent_id' => $alien->id], ['markNew' => true]);
         $table->save($entity);
 
-        $entity = new Entity(['name' => 'carpentry', 'parent_id' => null], ['markNew' => true]);
+        $entity = new NumberTree(['name' => 'carpentry', 'parent_id' => null], ['markNew' => true]);
         $this->assertSame($entity, $table->save($entity));
         $this->assertSame(25, $entity->lft);
         $this->assertSame(26, $entity->rght);
@@ -1177,6 +1183,7 @@ class TreeBehaviorTest extends TestCase
     public function testDeleteSubTreeWithCallbacks(): void
     {
         $NumberTreesArticles = $this->getTableLocator()->get('NumberTreesArticles');
+        $NumberTreesArticles->setEntityClass(NumberTreesArticle::class);
         $newArticle = $NumberTreesArticles->newEntity([
             'number_tree_id' => 7, // Link to sub-tree item
             'title' => 'New Article',
@@ -1378,17 +1385,17 @@ class TreeBehaviorTest extends TestCase
     {
         $this->table->behaviors()->Tree->setConfig('level', 'depth');
 
-        $entity = new Entity(['parent_id' => null, 'name' => 'Depth 0']);
+        $entity = new NumberTree(['parent_id' => null, 'name' => 'Depth 0']);
         $this->table->save($entity);
         $entity = $this->table->get(12);
         $this->assertSame(0, $entity->depth);
 
-        $entity = new Entity(['parent_id' => 1, 'name' => 'Depth 1']);
+        $entity = new NumberTree(['parent_id' => 1, 'name' => 'Depth 1']);
         $this->table->save($entity);
         $entity = $this->table->get(13);
         $this->assertSame(1, $entity->depth);
 
-        $entity = new Entity(['parent_id' => 8, 'name' => 'Depth 4']);
+        $entity = new NumberTree(['parent_id' => 8, 'name' => 'Depth 4']);
         $this->table->save($entity);
         $entity = $this->table->get(14);
         $this->assertSame(4, $entity->depth);
