@@ -5,7 +5,7 @@ namespace TestApp\Model\Entity;
 
 use ADmad\Entity\Datasource\Entity;
 
-class ArticlesTranslation extends Entity
+class AuthorsTranslation extends Entity
 {
     protected string $locale;
     protected int $id;

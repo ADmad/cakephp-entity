@@ -38,8 +38,8 @@ use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use TestApp\Model\Entity\Article;
 use TestApp\Model\Entity\Author;
-use TestApp\Model\Entity\User;
 use TestApp\Model\Entity\Comment;
+use TestApp\Model\Entity\User;
 use function Cake\I18n\__;
 
 /**
@@ -917,7 +917,7 @@ class HasManyTest extends TestCase
         $articles = $this->getTableLocator()->get('Articles');
         $association = $articles->hasMany('Comments', [
             'saveStrategy' => HasMany::SAVE_APPEND,
-            'propertyName' => 'comments_notype'
+            'propertyName' => 'comments_notype',
         ]);
 
         $entity = $articles->newEmptyEntity();
