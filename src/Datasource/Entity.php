@@ -611,27 +611,19 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     /**
      * Checks that a field is empty
      *
-     * This is not working like the PHP `empty()` function. The method will
-     * return true for:
-     *
-     * - `''` (empty string)
-     * - `null`
-     * - `[]`
-     *
-     * and false in all other cases.
+     * This works similar to the `empty()` function expect that it will return
+     * false for `0` and `'0'`.
      *
      * @param string $field The field to check.
      * @return bool
      */
     public function isEmpty(string $field): bool
     {
-        $value = $this->get($field);
+        $value = $this->has($field) ? $this->get($field) : null;
         if (
             $value === null ||
-            (
-                $value === [] ||
-                $value === ''
-            )
+            $value === [] ||
+            $value === ''
         ) {
             return true;
         }

@@ -1740,6 +1740,9 @@ class EntityTest extends TestCase
      */
     public function testIsEmpty(): void
     {
+        $entity = new Entity();
+        $this->assertTrue($entity->isEmpty('foo'));
+
         $entity = new class ([
             'array' => ['foo' => 'bar'],
             'emptyArray' => [],
@@ -1776,7 +1779,9 @@ class EntityTest extends TestCase
         $this->assertFalse($entity->isEmpty('intNotZero'));
         $this->assertFalse($entity->isEmpty('floatZero'));
         $this->assertFalse($entity->isEmpty('floatNonZero'));
+
         $this->assertTrue($entity->isEmpty('null'));
+        $this->assertTrue($entity->isEmpty('nonExistent'));
     }
 
     /**
