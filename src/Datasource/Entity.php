@@ -351,7 +351,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function set(array|string $field, mixed $value = null, array $options = [])
     {
-        if (is_string($field) && $field !== '') {
+        if (is_string($field)) {
             $guard = false;
             $field = [$field => $value];
         } else {
@@ -359,9 +359,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $options = (array)$value;
         }
 
-        if (!is_array($field)) {
-            throw new InvalidArgumentException('Cannot set an empty field');
-        }
         $options += [
             'setter' => true,
             'guard' => $guard,
@@ -376,6 +373,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         foreach ($field as $name => $value) {
             /** @psalm-suppress RedundantCastGivenDocblockType */
             $name = (string)$name;
+            if ($name === '') {
+                throw new InvalidArgumentException('Cannot set an empty field');
+            }
+
             if ($options['guard'] === true && !$this->isAccessible($name)) {
                 continue;
             }

@@ -70,6 +70,15 @@ class EntityTest extends TestCase
         $this->assertSame(1, $entity->getOriginal('id'));
     }
 
+    public function testEntitySetException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cannot set an empty field');
+
+        $entity = new Entity();
+        $entity->set(['' => 'value']);
+    }
+
     public function testWithDynamicProperties(): void
     {
         // This class has \AllowDynamicProperties annotation
