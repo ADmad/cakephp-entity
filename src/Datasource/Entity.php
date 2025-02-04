@@ -16,9 +16,7 @@ use Cake\Core\Exception\CakeException;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\InvalidPropertyInterface;
-use Cake\ORM\Entity as ORMEntity;
 use Cake\Utility\Hash;
-use Cake\Utility\Inflector;
 use InvalidArgumentException;
 use PropertyHookType;
 use ReflectionException;
@@ -98,13 +96,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      * @var array<string, bool>
      */
     protected array $_dirty = [];
-
-    /**
-     * Holds a cached list of getters/setters per class
-     *
-     * @var array<string, array<string, array<string, string>>>
-     */
-    protected static array $_accessors = [];
 
     /**
      * Indicates whether this entity is yet to be persisted.
@@ -857,53 +848,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function offsetUnset(mixed $offset): void
     {
         $this->unset($offset);
-    }
-
-    /**
-     * Fetch accessor method name
-     * Accessor methods (available or not) are cached in $_accessors
-     *
-     * @param string $property the field name to derive getter name from
-     * @param string $type the accessor type ('get' or 'set')
-     * @return string method name or empty string (no method available)
-     */
-    protected static function _accessor(string $property, string $type): string
-    {
-        $class = static::class;
-
-        if (isset(static::$_accessors[$class][$type][$property])) {
-            return static::$_accessors[$class][$type][$property];
-        }
-
-        if (!empty(static::$_accessors[$class])) {
-            return static::$_accessors[$class][$type][$property] = '';
-        }
-
-        if (
-            static::class === Entity::class ||
-            (class_exists(ORMEntity::class) && static::class === ORMEntity::class)
-        ) {
-            return '';
-        }
-
-        foreach (get_class_methods($class) as $method) {
-            $prefix = substr($method, 1, 3);
-            if (!str_starts_with($method, '_') || ($prefix !== 'get' && $prefix !== 'set')) {
-                continue;
-            }
-            $field = lcfirst(substr($method, 4));
-            $snakeField = Inflector::underscore($field);
-            $titleField = ucfirst($field);
-            static::$_accessors[$class][$prefix][$snakeField] = $method;
-            static::$_accessors[$class][$prefix][$field] = $method;
-            static::$_accessors[$class][$prefix][$titleField] = $method;
-        }
-
-        if (!isset(static::$_accessors[$class][$type][$property])) {
-            static::$_accessors[$class][$type][$property] = '';
-        }
-
-        return static::$_accessors[$class][$type][$property];
     }
 
     /**
