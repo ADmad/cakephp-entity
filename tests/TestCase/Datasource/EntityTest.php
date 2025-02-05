@@ -261,6 +261,42 @@ class EntityTest extends TestCase
     }
 
     /**
+     * Tests that it is possible to bypass the setters
+     */
+    public function testBypassSetters(): void
+    {
+        $entity = new class extends Entity {
+            protected ?string $name {
+                set (?string $name) {
+                    // Without this you will get an error:
+                    // Error: Property ADmad\Entity\Datasource\Entity@anonymous::$name is write-only
+                    $this->name = $name;
+
+                    throw new Exception('_setName should not have been called');
+                }
+            }
+
+            protected ?array $stuff {
+                set (?array $stuff) {
+                    $this->stuff = $stuff;
+
+                    throw new Exception('_setName should not have been called');
+                }
+            }
+        };
+        $entity->setAccess('*', true);
+
+        $entity->set('name', 'Jones', ['setter' => false]);
+        $this->assertSame('Jones', $entity->name);
+
+        $entity->set('stuff', ['foo'], ['setter' => false]);
+        $this->assertSame(['foo'], $entity->stuff);
+
+        $entity->set(['name' => 'foo', 'stuff' => ['bar']], ['setter' => false]);
+        $this->assertSame(['bar'], $entity->stuff);
+    }
+
+    /**
      * Tests that the constructor will set initial properties
      */
     public function testConstructor(): void

@@ -30,14 +30,12 @@ use ReflectionProperty;
  * concrete properties instead of storing the field values internally in an array,
  * thus allowing the use of property hooks instead of method based mutators and accessors.
  * For the various features of entity to function it still relies on the use of
- * magic methods, so the properties must be declared as protected/private causing
+ * magic methods, so the properties *must* be declared as protected/private causing
  * `__get()`, `__set()` etc. to be triggered.
  *
  * Differences from Cake\ORM\Entity:
  *
  * - Method based mutators and accessors are not used, instead property hooks are used.
- * - `useSetter` option has no affect as PHP doesn't allow bypassing the `set`
- *   hook for a property, hence your `set` hook must be idempotent.
  * - When using the `get` property hook for virtual fields, they can be accessed
  *   only using the same casing, unlike ORM\Entity which allows accessing using
  *   either underscored or camel cased name.
@@ -400,7 +398,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
-            $this->{$name} = $value;
+            if ($options['setter']) {
+                $this->{$name} = $value;
+
+                continue;
+            }
+
+            $this->reflectedProperty($name)?->setRawValue($this, $value);
         }
 
         return $this;
