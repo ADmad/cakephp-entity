@@ -456,16 +456,14 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         $value = null;
         $fieldIsPresent = false;
 
-        if (isset($this->allowedDynamicFields[$field])) {
+        if (property_exists($this, $field)) {
+            $fieldIsPresent = true;
+            $value = $this->{$field} ?? null;
+        } elseif (isset($this->allowedDynamicFields[$field])) {
             $fieldIsPresent = true;
             if (array_key_exists($field, $this->dynamicFields)) {
                 $value = &$this->dynamicFields[$field];
-            } elseif (property_exists($this, $field)) {
-                $value = $this->{$field};
             }
-        } elseif (property_exists($this, $field)) {
-            $fieldIsPresent = true;
-            $value = $this->{$field} ?? null;
         }
 
         if (static::class === self::class) {
