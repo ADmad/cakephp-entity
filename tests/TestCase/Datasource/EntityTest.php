@@ -13,11 +13,9 @@ use Mockery;
 use stdClass;
 use TestApp\Model\Entity\DynamicProps;
 use TestApp\Model\Entity\User;
-use function PHPUnit\Framework\assertNull;
 
 /**
  * Entity test case.
- *
  */
 // phpcs:ignoreFile
 class EntityTest extends TestCase
