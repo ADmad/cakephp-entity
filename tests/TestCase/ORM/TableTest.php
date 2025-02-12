@@ -1660,7 +1660,6 @@ class TableTest extends TestCase
     public function testFindListWithVirtualField(): void
     {
         $entity = new class extends User {
-            protected array $_virtual = ['bonus'];
             protected string $bonus {
                 get => 'bonus';
             }
@@ -5630,7 +5629,7 @@ class TableTest extends TestCase
     public function testFindOrCreateAccessibleFields(): void
     {
         $entity = new class () extends Article {
-            protected array $_accessible = ['id' => true, 'title' => false];
+            protected array $accessible = ['id' => true, 'title' => false];
         };
 
         $articles = $this->getTableLocator()->get('Articles');
@@ -5650,7 +5649,7 @@ class TableTest extends TestCase
     public function testFindOrCreatePartialValidation(): void
     {
         $entity = new class () extends Article {
-            protected array $_accessible = ['id' => true, 'title' => false];
+            // protected array $accessible = ['id' => true, 'title' => false];
         };
 
         $articles = $this->getTableLocator()->get('Articles');

@@ -369,7 +369,7 @@ class EntityTest extends TestCase
 
         $entity = new class extends Entity
         {
-            protected array $_virtual = [
+            protected array $virtual = [
                 'bonus',
             ];
 

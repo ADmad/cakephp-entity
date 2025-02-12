@@ -6,7 +6,6 @@ declare(strict_types=1);
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  * @copyright Copyright (c) ADmad
  */
 namespace ADmad\Entity\Datasource;
@@ -47,122 +46,7 @@ use ReflectionProperty;
  */
 class Entity implements EntityInterface, InvalidPropertyInterface
 {
-    /**
-     * Holds field names for initialized properties
-     *
-     * @var array<string>
-     */
-    protected array $propertyFields = [];
-
-    /**
-     * Holds all fields that have been changed and their original values for this entity.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $_original = [];
-
-    /**
-     * Holds all fields that have been initially set on instantiation, or after marking as clean
-     *
-     * @var array<string>
-     */
-    protected array $_originalFields = [];
-
-    /**
-     * List of field names that should **not** be included in JSON or Array
-     * representations of this Entity.
-     *
-     * @var array<string>
-     */
-    protected array $_hidden = [];
-
-    /**
-     * List of computed or virtual fields that **should** be included in JSON or array
-     * representations of this Entity. If a field is present in both _hidden and _virtual
-     * the field will **not** be in the array/JSON versions of the entity.
-     *
-     * @var array<string>
-     */
-    protected array $_virtual = [];
-
-    /**
-     * Holds a list of the fields that were modified or added after this object
-     * was originally created.
-     *
-     * @var array<string, bool>
-     */
-    protected array $_dirty = [];
-
-    /**
-     * Indicates whether this entity is yet to be persisted.
-     * Entities default to assuming they are new. You can use Table::persisted()
-     * to set the new flag on an entity based on records in the database.
-     *
-     * @var bool
-     */
-    protected bool $_new = true;
-
-    /**
-     * List of errors per field as stored in this object.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $_errors = [];
-
-    /**
-     * List of invalid fields and their data for errors upon validation/patching.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $_invalid = [];
-
-    /**
-     * Map of fields in this entity that can be safely mass assigned, each
-     * field name points to a boolean indicating its status. An empty array
-     * means no fields are accessible for mass assigment.
-     *
-     * The special field '\*' can also be mapped, meaning that any other field
-     * not defined in the map will take its value. For example, `'*' => true`
-     * means that any field not defined in the map will be accessible for mass
-     * assignment by default.
-     *
-     * @var array<string, bool>
-     */
-    protected array $_accessible = ['*' => true];
-
-    /**
-     * The alias of the repository this entity came from
-     *
-     * @var string
-     */
-    protected string $_registryAlias = '';
-
-    /**
-     * Storing the current visitation status while recursing through entities getting errors.
-     *
-     * @var bool
-     */
-    protected bool $_hasBeenVisited = false;
-
-    /**
-     * List of fields that can be dynamically set in this entity.
-     *
-     * @var array<string, true>
-     */
-    protected array $allowedDynamicFields = [
-        '_joinData' => true,
-        '_matchingData' => true,
-        '_locale' => true,
-        '_translations' => true,
-        '_i18n' => true,
-    ];
-
-    /**
-     * Dynamically set field values.
-     *
-     * @var array<array-key, mixed>
-     */
-    protected array $dynamicFields = [];
+    private EntityMetaData $__data__;
 
     /**
      * Initializes the internal properties of this entity out of the
@@ -185,6 +69,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function __construct(array $fields = [], array $options = [])
     {
+        $this->__data__ = new EntityMetaData();
+
+        $this->initialize();
+
         $options += [
             'useSetters' => true,
             'markClean' => false,
@@ -215,6 +103,15 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if ($options['markClean']) {
             $this->clean();
         }
+    }
+
+    /**
+     * Intialize the entity.
+     *
+     * @return void
+     */
+    public function initialize(): void
+    {
     }
 
     /**
@@ -249,9 +146,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function __isset(string $field): bool
     {
-        if (isset($this->allowedDynamicFields[$field])) {
-            if (array_key_exists($field, $this->dynamicFields)) {
-                return isset($this->dynamicFields[$field]);
+        if (isset($this->__data__->allowedDynamicFields[$field])) {
+            if (array_key_exists($field, $this->__data__->dynamicFields)) {
+                return isset($this->__data__->dynamicFields[$field]);
             }
         }
 
@@ -370,29 +267,29 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
             if (
                 $this->isOriginalField($name) &&
-                !array_key_exists($name, $this->_original) &&
-                in_array($name, $this->propertyFields, true) &&
+                !array_key_exists($name, $this->__data__->original) &&
+                in_array($name, $this->__data__->propertyFields, true) &&
                 $value !== ($this->{$name} ?? null)
             ) {
-                $this->_original[$name] = $this->{$name} ?? null;
+                $this->__data__->original[$name] = $this->{$name} ?? null;
             }
 
-            if (!in_array($name, $this->propertyFields, true)) {
-                $this->propertyFields[] = $name;
+            if (!in_array($name, $this->__data__->propertyFields, true)) {
+                $this->__data__->propertyFields[] = $name;
             }
 
             $propExists = property_exists($this, $name);
 
             if (!$propExists && $options['allowDynamic']) {
-                $this->allowedDynamicFields[$name] = true;
+                $this->__data__->allowedDynamicFields[$name] = true;
             }
 
             if ($this->isModified($name, $value)) {
                 $this->setDirty($name, true);
             }
 
-            if (!$propExists && isset($this->allowedDynamicFields[$name])) {
-                $this->dynamicFields[$name] = $value;
+            if (!$propExists && isset($this->__data__->allowedDynamicFields[$name])) {
+                $this->__data__->dynamicFields[$name] = $value;
                 continue;
             }
 
@@ -417,10 +314,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected function isModified(string $field, mixed $value): bool
     {
         if (
-            isset($this->allowedDynamicFields[$field])
+            isset($this->__data__->allowedDynamicFields[$field])
             && !property_exists($this, $field)
         ) {
-            $existing = $this->dynamicFields[$field] ?? null;
+            $existing = $this->__data__->dynamicFields[$field] ?? null;
         } else {
             $existing = $this->{$field} ?? null;
         }
@@ -459,10 +356,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if (property_exists($this, $field)) {
             $fieldIsPresent = true;
             $value = $this->{$field} ?? null;
-        } elseif (isset($this->allowedDynamicFields[$field])) {
+        } elseif (isset($this->__data__->allowedDynamicFields[$field])) {
             $fieldIsPresent = true;
-            if (array_key_exists($field, $this->dynamicFields)) {
-                $value = &$this->dynamicFields[$field];
+            if (array_key_exists($field, $this->__data__->dynamicFields)) {
+                $value = &$this->__data__->dynamicFields[$field];
             }
         }
 
@@ -502,7 +399,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function hasOriginal(string $field): bool
     {
-        return array_key_exists($field, $this->_original);
+        return array_key_exists($field, $this->__data__->original);
     }
 
     /**
@@ -518,8 +415,8 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if ($field === '') {
             throw new InvalidArgumentException('Cannot get an empty field');
         }
-        if (array_key_exists($field, $this->_original)) {
-            return $this->_original[$field];
+        if (array_key_exists($field, $this->__data__->original)) {
+            return $this->__data__->original[$field];
         }
 
         if (!$allowFallback) {
@@ -536,9 +433,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getOriginalValues(): array
     {
-        $originals = $this->_original;
+        $originals = $this->__data__->original;
         $originalKeys = array_keys($originals);
-        foreach ($this->propertyFields as $key) {
+        foreach ($this->__data__->propertyFields as $key) {
             if (
                 !in_array($key, $originalKeys, true) &&
                 $this->isOriginalField($key)
@@ -584,7 +481,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         foreach ((array)$field as $prop) {
             $rp = $this->reflectedProperty($prop);
             if ($rp === null) {
-                if (!array_key_exists($prop, $this->dynamicFields)) {
+                if (!array_key_exists($prop, $this->__data__->dynamicFields)) {
                     return false;
                 }
             } elseif (!$rp->getHook(PropertyHookType::Get)) {
@@ -658,11 +555,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         $field = (array)$field;
         foreach ($field as $p) {
-            unset($this->dynamicFields[$p], $this->_dirty[$p]);
+            unset($this->__data__->dynamicFields[$p], $this->__data__->dirty[$p]);
 
-            $pos = array_search($p, $this->propertyFields, true);
+            $pos = array_search($p, $this->__data__->propertyFields, true);
             if ($pos !== false) {
-                unset($this->propertyFields[$pos]);
+                unset($this->__data__->propertyFields[$pos]);
             }
 
             $rp = $this->reflectedProperty($p);
@@ -692,13 +589,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function setHidden(array $fields, bool $merge = false)
     {
         if ($merge === false) {
-            $this->_hidden = $fields;
+            $this->__data__->hidden = $fields;
 
             return $this;
         }
 
-        $fields = array_merge($this->_hidden, $fields);
-        $this->_hidden = array_unique($fields);
+        $fields = array_merge($this->__data__->hidden, $fields);
+        $this->__data__->hidden = array_unique($fields);
 
         return $this;
     }
@@ -710,7 +607,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getHidden(): array
     {
-        return $this->_hidden;
+        return $this->__data__->hidden;
     }
 
     /**
@@ -723,13 +620,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function setVirtual(array $fields, bool $merge = false)
     {
         if ($merge === false) {
-            $this->_virtual = $fields;
+            $this->__data__->virtual = $fields;
 
             return $this;
         }
 
-        $fields = array_merge($this->_virtual, $fields);
-        $this->_virtual = array_unique($fields);
+        $fields = array_merge($this->__data__->virtual, $fields);
+        $this->__data__->virtual = array_unique($fields);
 
         return $this;
     }
@@ -741,7 +638,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getVirtual(): array
     {
-        return $this->_virtual;
+        return $this->__data__->virtual;
     }
 
     /**
@@ -755,9 +652,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getVisible(): array
     {
-        $fields = array_merge($this->propertyFields, $this->_virtual);
+        $fields = array_merge($this->__data__->propertyFields, $this->__data__->virtual);
 
-        return array_diff($fields, $this->_hidden);
+        return array_diff($fields, $this->__data__->hidden);
     }
 
     /**
@@ -926,7 +823,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function isOriginalField(string $name): bool
     {
-        return in_array($name, $this->_originalFields);
+        return in_array($name, $this->__data__->originalFields);
     }
 
     /**
@@ -937,7 +834,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getOriginalFields(): array
     {
-        return $this->_originalFields;
+        return $this->__data__->originalFields;
     }
 
     /**
@@ -951,7 +848,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected function setOriginalField(string|array $field, bool $merge = true)
     {
         if (!$merge) {
-            $this->_originalFields = (array)$field;
+            $this->__data__->originalFields = (array)$field;
 
             return $this;
         }
@@ -960,7 +857,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         foreach ($fields as $field) {
             $field = (string)$field;
             if (!$this->isOriginalField($field)) {
-                $this->_originalFields[] = $field;
+                $this->__data__->originalFields[] = $field;
             }
         }
 
@@ -980,13 +877,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         if ($isDirty === false) {
             $this->setOriginalField($field);
 
-            unset($this->_dirty[$field], $this->_original[$field]);
+            unset($this->__data__->dirty[$field], $this->__data__->original[$field]);
 
             return $this;
         }
 
-        $this->_dirty[$field] = true;
-        unset($this->_errors[$field], $this->_invalid[$field]);
+        $this->__data__->dirty[$field] = true;
+        unset($this->__data__->errors[$field], $this->__data__->invalid[$field]);
 
         return $this;
     }
@@ -1000,8 +897,8 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function isDirty(?string $field = null): bool
     {
         return $field === null
-            ? $this->_dirty !== []
-            : isset($this->_dirty[$field]);
+            ? $this->__data__->dirty !== []
+            : isset($this->__data__->dirty[$field]);
     }
 
     /**
@@ -1011,7 +908,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getDirty(): array
     {
-        return array_keys($this->_dirty);
+        return array_keys($this->__data__->dirty);
     }
 
     /**
@@ -1023,11 +920,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function clean(): void
     {
-        $this->_dirty = [];
-        $this->_errors = [];
-        $this->_invalid = [];
-        $this->_original = [];
-        $this->setOriginalField($this->propertyFields, false);
+        $this->__data__->dirty = [];
+        $this->__data__->errors = [];
+        $this->__data__->invalid = [];
+        $this->__data__->original = [];
+        $this->setOriginalField($this->__data__->propertyFields, false);
     }
 
     /**
@@ -1042,12 +939,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function setNew(bool $new)
     {
         if ($new) {
-            foreach ($this->propertyFields as $k) {
-                $this->_dirty[$k] = true;
+            foreach ($this->__data__->propertyFields as $k) {
+                $this->__data__->dirty[$k] = true;
             }
         }
 
-        $this->_new = $new;
+        $this->__data__->new = $new;
 
         return $this;
     }
@@ -1059,7 +956,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function isNew(): bool
     {
-        return $this->_new;
+        return $this->__data__->new;
     }
 
     /**
@@ -1070,13 +967,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function hasErrors(bool $includeNested = true): bool
     {
-        if ($this->_hasBeenVisited) {
+        if ($this->__data__->hasBeenVisited) {
             // While recursing through entities, each entity should only be visited once.
             // See https://github.com/cakephp/cakephp/issues/17318
             return false;
         }
 
-        if (array_filter($this->_errors)) {
+        if (array_filter($this->__data__->errors)) {
             return true;
         }
 
@@ -1084,9 +981,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             return false;
         }
 
-        $this->_hasBeenVisited = true;
+        $this->__data__->hasBeenVisited = true;
         try {
-            foreach ($this->propertyFields as $field) {
+            foreach ($this->__data__->propertyFields as $field) {
                 $value = $this->{$field};
 
                 if ($this->_readHasErrors($value)) {
@@ -1094,7 +991,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 }
             }
         } finally {
-            $this->_hasBeenVisited = false;
+            $this->__data__->hasBeenVisited = false;
         }
 
         return false;
@@ -1107,20 +1004,20 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getErrors(): array
     {
-        if ($this->_hasBeenVisited) {
+        if ($this->__data__->hasBeenVisited) {
             // While recursing through entities, each entity should only be visited once. See https://github.com/cakephp/cakephp/issues/17318
             return [];
         }
 
-        $diff = array_diff_key($this->propertyFields, array_keys($this->_errors));
+        $diff = array_diff_key($this->__data__->propertyFields, array_keys($this->__data__->errors));
         $values = [];
         foreach ($diff as $field) {
             $values[$field] = $this->{$field};
         }
 
-        $this->_hasBeenVisited = true;
+        $this->__data__->hasBeenVisited = true;
         try {
-            $errors = $this->_errors;
+            $errors = $this->__data__->errors;
             foreach ($values as $field => $value) {
                 if (is_array($value) || $value instanceof EntityInterface) {
                     $nestedErrors = $this->_readError($value);
@@ -1130,7 +1027,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 }
             }
         } finally {
-            $this->_hasBeenVisited = false;
+            $this->__data__->hasBeenVisited = false;
         }
 
         return $errors;
@@ -1144,7 +1041,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getError(string $field): array
     {
-        return $this->_errors[$field] ?? $this->_nestedErrors($field);
+        return $this->__data__->errors[$field] ?? $this->_nestedErrors($field);
     }
 
     /**
@@ -1165,23 +1062,23 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         if ($overwrite) {
             foreach ($errors as $f => $error) {
-                $this->_errors[$f] = (array)$error;
+                $this->__data__->errors[$f] = (array)$error;
             }
 
             return $this;
         }
 
         foreach ($errors as $f => $error) {
-            $this->_errors += [$f => []];
+            $this->__data__->errors += [$f => []];
 
             // String messages are appended to the list,
             // while more complex error structures need their
             // keys preserved for nested validator.
             if (is_string($error)) {
-                $this->_errors[$f][] = $error;
+                $this->__data__->errors[$f][] = $error;
             } else {
                 foreach ($error as $k => $v) {
-                    $this->_errors[$f][$k] = $v;
+                    $this->__data__->errors[$f][$k] = $v;
                 }
             }
         }
@@ -1238,7 +1135,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         $path = explode('.', $field);
 
         // Try reading the errors data with field as a simple path
-        $error = $this->getNestedVal($this->_errors, $path);
+        $error = $this->getNestedVal($this->__data__->errors, $path);
         if ($error !== null) {
             return $error;
         }
@@ -1352,7 +1249,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getInvalid(): array
     {
-        return $this->_invalid;
+        return $this->__data__->invalid;
     }
 
     /**
@@ -1363,7 +1260,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getInvalidField(string $field): mixed
     {
-        return $this->_invalid[$field] ?? null;
+        return $this->__data__->invalid[$field] ?? null;
     }
 
     /**
@@ -1381,10 +1278,10 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     {
         foreach ($fields as $field => $value) {
             if ($overwrite) {
-                $this->_invalid[$field] = $value;
+                $this->__data__->invalid[$field] = $value;
                 continue;
             }
-            $this->_invalid += [$field => $value];
+            $this->__data__->invalid += [$field => $value];
         }
 
         return $this;
@@ -1399,7 +1296,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function setInvalidField(string $field, mixed $value)
     {
-        $this->_invalid[$field] = $value;
+        $this->__data__->invalid[$field] = $value;
 
         return $this;
     }
@@ -1431,14 +1328,14 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function setAccess(array|string $field, bool $set)
     {
         if ($field === '*') {
-            $this->_accessible = array_map(fn ($p) => $set, $this->_accessible);
-            $this->_accessible['*'] = $set;
+            $this->__data__->accessible = array_map(fn ($p) => $set, $this->__data__->accessible);
+            $this->__data__->accessible['*'] = $set;
 
             return $this;
         }
 
         foreach ((array)$field as $prop) {
-            $this->_accessible[$prop] = $set;
+            $this->__data__->accessible[$prop] = $set;
         }
 
         return $this;
@@ -1452,7 +1349,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getAccessible(): array
     {
-        return $this->_accessible;
+        return $this->__data__->accessible;
     }
 
     /**
@@ -1469,9 +1366,9 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function isAccessible(string $field): bool
     {
-        $value = $this->_accessible[$field] ?? null;
+        $value = $this->__data__->accessible[$field] ?? null;
 
-        return ($value === null && !empty($this->_accessible['*'])) || $value;
+        return ($value === null && !empty($this->__data__->accessible['*'])) || $value;
     }
 
     /**
@@ -1481,7 +1378,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function getSource(): string
     {
-        return $this->_registryAlias;
+        return $this->__data__->registryAlias;
     }
 
     /**
@@ -1492,7 +1389,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function setSource(string $alias)
     {
-        $this->_registryAlias = $alias;
+        $this->__data__->registryAlias = $alias;
 
         return $this;
     }
@@ -1523,6 +1420,16 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     }
 
     /**
+     * Clone the entity along with its data.
+     *
+     * @return void
+     */
+    public function __clone(): void
+    {
+        $this->__data__ = clone $this->__data__;
+    }
+
+    /**
      * Returns an array that can be used to describe the internal state of this
      * object.
      *
@@ -1531,27 +1438,27 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function __debugInfo(): array
     {
         $fields = [];
-        foreach ($this->propertyFields as $field) {
+        foreach ($this->__data__->propertyFields as $field) {
             $fields[$field] = $this->{$field};
         }
-        $fields += $this->dynamicFields;
+        $fields += $this->__data__->dynamicFields;
 
-        foreach ($this->_virtual as $field) {
+        foreach ($this->__data__->virtual as $field) {
             $fields[$field] = $this->{$field};
         }
 
         return $fields + [
             '[new]' => $this->isNew(),
-            '[accessible]' => $this->_accessible,
-            '[dirty]' => $this->_dirty,
-            '[allowedDynamic]' => array_keys($this->allowedDynamicFields),
-            '[original]' => $this->_original,
-            '[originalFields]' => $this->_originalFields,
-            '[virtual]' => $this->_virtual,
+            '[accessible]' => $this->__data__->accessible,
+            '[dirty]' => $this->__data__->dirty,
+            '[allowedDynamic]' => array_keys($this->__data__->allowedDynamicFields),
+            '[original]' => $this->__data__->original,
+            '[originalFields]' => $this->__data__->originalFields,
+            '[virtual]' => $this->__data__->virtual,
             '[hasErrors]' => $this->hasErrors(),
-            '[errors]' => $this->_errors,
-            '[invalid]' => $this->_invalid,
-            '[repository]' => $this->_registryAlias,
+            '[errors]' => $this->__data__->errors,
+            '[invalid]' => $this->__data__->invalid,
+            '[repository]' => $this->__data__->registryAlias,
         ];
     }
 }

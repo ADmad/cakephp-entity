@@ -8,7 +8,9 @@ namespace TestApp\Model\Entity;
  */
 class ProtectedUser extends User
 {
-    protected array $_hidden = ['password'];
-
-    protected array $_accessible = [];
+    public function initialize(): void
+    {
+        $this->setAccess(['*'], false);
+        $this->setHidden(['password']);
+    }
 }

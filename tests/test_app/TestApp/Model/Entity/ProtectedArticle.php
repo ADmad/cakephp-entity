@@ -8,8 +8,9 @@ namespace TestApp\Model\Entity;
  */
 class ProtectedArticle extends Article
 {
-    protected array $_accessible = [
-        'title' => true,
-        'body' => true,
-    ];
+    public function initialize(): void
+    {
+        $this->setAccess(['*'], false);
+        $this->setAccess(['title', 'body'], true);
+    }
 }
