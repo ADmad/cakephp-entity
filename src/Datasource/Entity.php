@@ -11,12 +11,10 @@ declare(strict_types=1);
  */
 namespace ADmad\Entity\Datasource;
 
-use Cake\Collection\Collection;
 use Cake\Core\Exception\CakeException;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\InvalidPropertyInterface;
-use Cake\Utility\Hash;
 use InvalidArgumentException;
 use PropertyHookType;
 use ReflectionException;
@@ -1078,11 +1076,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function hasErrors(bool $includeNested = true): bool
     {
         if ($this->_hasBeenVisited) {
-            // While recursing through entities, each entity should only be visited once. See https://github.com/cakephp/cakephp/issues/17318
+            // While recursing through entities, each entity should only be visited once.
+            // See https://github.com/cakephp/cakephp/issues/17318
             return false;
         }
 
-        if (Hash::filter($this->_errors)) {
+        if (array_filter($this->_errors)) {
             return true;
         }
 
@@ -1126,15 +1125,15 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
         $this->_hasBeenVisited = true;
         try {
-            $errors = $this->_errors + (new Collection($values))
-                ->filter(function ($value) {
-                    return is_array($value) || $value instanceof EntityInterface;
-                })
-                ->map(function ($value) {
-                    return $this->_readError($value);
-                })
-                ->filter()
-                ->toArray();
+            $errors = $this->_errors;
+            foreach ($values as $field => $value) {
+                if (is_array($value) || $value instanceof EntityInterface) {
+                    $nestedErrors = $this->_readError($value);
+                    if (!empty($nestedErrors)) {
+                        $errors[$field] = $nestedErrors;
+                    }
+                }
+            }
         } finally {
             $this->_hasBeenVisited = false;
         }
@@ -1240,12 +1239,14 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
             return [];
         }
+
+        $path = explode('.', $field);
+
         // Try reading the errors data with field as a simple path
-        $error = Hash::get($this->_errors, $field);
+        $error = $this->getNestedVal($this->_errors, $path);
         if ($error !== null) {
             return $error;
         }
-        $path = explode('.', $field);
 
         // Traverse down the related entities/arrays for
         // the relevant entity.
@@ -1279,6 +1280,26 @@ class Entity implements EntityInterface, InvalidPropertyInterface
         }
 
         return [];
+    }
+
+    /**
+     * Get a nested value from an array.
+     *
+     * @param array $array The array to extract from.
+     * @param array $path The path to traverse.
+     * @return array|null
+     */
+    protected function getNestedVal(array $array, array $path): ?array
+    {
+        foreach ($path as $key) {
+            if (isset($array[$key]) && is_array($array[$key])) {
+                $array = $array[$key];
+            } else {
+                return null;
+            }
+        }
+
+        return $array;
     }
 
     /**
