@@ -13,6 +13,7 @@ use Mockery;
 use stdClass;
 use TestApp\Model\Entity\DynamicProps;
 use TestApp\Model\Entity\User;
+use function PHPUnit\Framework\assertNull;
 
 /**
  * Entity test case.
@@ -581,6 +582,18 @@ class EntityTest extends TestCase
         $this->assertFalse($entity->has('id'));
 
         $this->assertSame([], $entity->toArray());
+
+        $entity = new class (['name' => 'bar']) extends Entity {
+            protected $id;
+            protected ?string $name {
+                set(?string $name) {
+                    $this->name = 'Dr. ' . $name;
+                }
+            }
+        };
+
+        $entity->unset('name');
+        $this->assertNull($entity->get('name'));
     }
 
     /**

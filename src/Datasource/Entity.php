@@ -678,11 +678,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             }
 
             if ($rp->getHooks()) {
-                $this->{$p} = null;
+                $rp->setRawValue($this, null);
+
                 continue;
-            } else {
-                unset($this->{$p});
             }
+
+            unset($this->{$p});
         }
 
         return $this;
