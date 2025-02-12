@@ -463,10 +463,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             } elseif (property_exists($this, $field)) {
                 $value = $this->{$field};
             }
-        } elseif (
-            in_array($field, $this->propertyFields, true)
-            || property_exists($this, $field)
-        ) {
+        } elseif (property_exists($this, $field)) {
             $fieldIsPresent = true;
             $value = $this->{$field} ?? null;
         }
