@@ -818,10 +818,12 @@ class EntityTest extends TestCase
             protected $id;
             protected $title;
             protected $author_id;
+            protected ?bool $is_approved = null;
         };
         $this->assertTrue($entity->isDirty('id'));
         $this->assertTrue($entity->isDirty('title'));
         $this->assertTrue($entity->isDirty('author_id'));
+        $this->assertFalse($entity->isDirty('is_approved'));
 
         $this->assertTrue($entity->isDirty());
 
@@ -836,15 +838,24 @@ class EntityTest extends TestCase
         $entity->setDirty('author_id', false);
         $this->assertFalse($entity->isDirty(), 'all fields are clean.');
 
+        $entity->is_approved = true;
+        $this->assertTrue($entity->isDirty('is_approved'));
+
         $entity2 = new class ([
             'id' => 1,
             'title' => 'Foo',
         ], ['markClean' => true]) extends Entity {
             protected $id;
             protected $title;
+            protected ?bool $is_approved = null;
         };
         $this->assertFalse($entity2->isDirty());
         $this->assertFalse($entity2->isDirty('title'));
+
+        $entity2->is_approved = true;
+        $this->assertTrue($entity2->isDirty('is_approved'));
+
+        $this->assertTrue($entity2->isDirty());
 
         $entity2->title = 'bar';
         $this->assertTrue($entity2->isDirty('title'));
