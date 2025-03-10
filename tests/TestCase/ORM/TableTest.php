@@ -2377,7 +2377,7 @@ class TableTest extends TestCase
     public function testBeforeSaveException(): void
     {
         $this->expectException(AssertionError::class);
-        $this->expectExceptionMessage('The beforeSave callback must return `false` or `EntityInterface` instance. Got `int` instead.');
+        $this->expectExceptionMessage('The result for the `Model.beforeSave` event must be `false` or `EntityInterface` instance. Got `int` instead.');
 
         $table = $this->getTableLocator()->get('users')->setEntityClass(User::class);
         $data = new User([
@@ -2388,7 +2388,7 @@ class TableTest extends TestCase
         $listener = function (EventInterface $event, $entity) {
             $event->stopPropagation();
 
-            return 1;
+            $event->setResult(1);
         };
         $table->getEventManager()->on('Model.beforeSave', $listener);
         $table->save($data);
@@ -2896,7 +2896,7 @@ class TableTest extends TestCase
         $entity = $table->get(1);
 
         $entity->setAccess('*', true);
-        $entity->set($entity->toArray());
+        $entity->patch($entity->toArray());
         $this->assertSame($entity, $table->save($entity));
     }
 
@@ -5480,7 +5480,7 @@ class TableTest extends TestCase
             ['author_id' => 2, 'title' => 'First Article'],
             function ($article) use (&$callbackExecuted): void {
                 $this->assertInstanceOf(EntityInterface::class, $article);
-                $article->set(['published' => 'N', 'body' => 'New body']);
+                $article->patch(['published' => 'N', 'body' => 'New body']);
                 $callbackExecuted = true;
             },
         );
