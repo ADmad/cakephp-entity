@@ -5,12 +5,12 @@
     "license": "MIT",
     "require": {
         "php": ">=8.4",
-        "cakephp/datasource": "dev-5.next"
+        "cakephp/datasource": "^5.2"
     },
     "require-dev": {
-        "cakephp/cakephp": "dev-5.next",
+        "cakephp/cakephp": "^5.2",
         "mockery/mockery": "^1.6",
-        "phpunit/phpunit": "^11.1.3"
+        "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
