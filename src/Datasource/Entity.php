@@ -17,6 +17,7 @@ use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\InvalidPropertyInterface;
 use InvalidArgumentException;
 use PropertyHookType;
+use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 use function Cake\Core\deprecationWarning;
@@ -164,6 +165,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      * @var array<array-key, mixed>
      */
     protected array $dynamicFields = [];
+
+    /**
+     * Cache of reflected properties by class and property name
+     *
+     * @var array<string, array{hasDynamicProps: bool, properties: array<string, \ReflectionProperty|null>}>
+     */
+    private static array $reflectionCache = [];
 
     /**
      * Initializes the internal properties of this entity out of the
@@ -1567,9 +1575,37 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     protected function reflectedProperty(string $name): ?ReflectionProperty
     {
+        $class = static::class;
+
+        if (!isset(self::$reflectionCache[$class])) {
+            $attributes = (new ReflectionClass($class))->getAttributes('AllowDynamicProperties');
+
+            self::$reflectionCache[$class] = [
+                'hasDynamicProps' => $attributes !== [],
+                'properties' => [],
+            ];
+        }
+
+        if (self::$reflectionCache[$class]['hasDynamicProps']) {
+            try {
+                return new ReflectionProperty($this, $name);
+            } catch (ReflectionException) {
+                return null;
+            }
+        }
+
+        if (array_key_exists($name, self::$reflectionCache[$class]['properties'])) {
+            return self::$reflectionCache[$class]['properties'][$name];
+        }
+
         try {
-            return new ReflectionProperty($this, $name);
+            $reflection = new ReflectionProperty($this, $name);
+            self::$reflectionCache[$class]['properties'][$name] = $reflection;
+
+            return $reflection;
         } catch (ReflectionException) {
+            self::$reflectionCache[$class]['properties'][$name] = null;
+
             return null;
         }
     }
