@@ -309,9 +309,9 @@ class EntityTest extends TestCase
             ->with(
                 ...self::withConsecutive(
                     [
-                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true, 'allowDynamic' => true],
+                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true, 'allowDynamic' => true, 'asOriginal' => true],
                     ],
-                    [['foo' => 'bar'], ['guard' => false, 'setter' => true, 'allowDynamic' => true]],
+                    [['foo' => 'bar'], ['guard' => false, 'setter' => true, 'allowDynamic' => true, 'asOriginal' => true]],
                 ),
             );
 
@@ -331,7 +331,7 @@ class EntityTest extends TestCase
             ->getMock();
         $entity->expects($this->once())
             ->method('patch')
-            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true, 'allowDynamic' => true]);
+            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true, 'allowDynamic' => true, 'asOriginal' => true]);
         $entity->__construct(['foo' => 'bar'], ['guard' => true]);
     }
 
@@ -541,7 +541,7 @@ class EntityTest extends TestCase
             protected $id;
             protected $name;
             protected $foo;
-            protected string $typed;
+            protected ?string $typed;
         };
         $this->assertTrue($entity->has('id'));
         $this->assertTrue($entity->has('name'));
@@ -549,10 +549,16 @@ class EntityTest extends TestCase
         $this->assertFalse($entity->has('typed'));
         $this->assertFalse($entity->has('last_name'));
 
+        $entity->typed = null;
+        $this->assertTrue($entity->has('typed'));
+
         $this->assertTrue($entity->has(['id']));
         $this->assertTrue($entity->has(['id', 'name']));
         $this->assertFalse($entity->has(['id', 'foo']));
         $this->assertFalse($entity->has(['id', 'nope']));
+
+        $entity->foo = null;
+        $this->assertTrue($entity->has('foo'));
 
         $entity = new class extends Entity {
             protected $things {

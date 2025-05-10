@@ -17,6 +17,7 @@ use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\InvalidPropertyInterface;
 use InvalidArgumentException;
 use PropertyHookType;
+use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 use function Cake\Core\deprecationWarning;
@@ -166,6 +167,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     protected array $dynamicFields = [];
 
     /**
+     * Cache of reflected properties by class and property name
+     *
+     * @var array<string, array{hasDynamicProps: bool, properties: array<string, \ReflectionProperty|null>}>
+     */
+    private static array $reflectionCache = [];
+
+    /**
      * Initializes the internal properties of this entity out of the
      * keys in an array. The following list of options can be used:
      *
@@ -207,6 +215,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $this->setOriginalField(array_keys($fields));
 
             $this->patch($fields, [
+                'asOriginal' => true,
                 'setter' => $options['useSetters'],
                 'guard' => $options['guard'],
                 'allowDynamic' => $options['allowDynamic'],
@@ -398,6 +407,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
+            if ($options['asOriginal'] || $this->isModified($name, $value)) {
+                $this->setDirty($name, true);
+            } else {
+                continue;
+            }
+
             if (
                 $this->isOriginalField($name) &&
                 !array_key_exists($name, $this->_original) &&
@@ -415,10 +430,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
             if (!$propExists && $options['allowDynamic']) {
                 $this->allowedDynamicFields[$name] = true;
-            }
-
-            if ($this->isModified($name, $value)) {
-                $this->setDirty($name, true);
             }
 
             if (!$propExists && isset($this->allowedDynamicFields[$name])) {
@@ -442,6 +453,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     /**
      * Check if the provided value is same as existing value for a field.
      *
+     * This check is used to determine if a field should be set as dirty or not.
+     * It will return `false` for scalar values and objects which haven't changed.
+     * For arrays `true` will be returned always because the original/updated list
+     * could contain references to the same objects, even though those objects
+     * may have changed internally.
+     *
      * @param string $field The field to check.
      * @return bool
      */
@@ -451,8 +468,26 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             isset($this->allowedDynamicFields[$field])
             && !property_exists($this, $field)
         ) {
-            $existing = $this->dynamicFields[$field] ?? null;
+            if (!array_key_exists($field, $this->dynamicFields)) {
+                return true;
+            }
+
+            $existing = $this->dynamicFields[$field];
         } else {
+            $rp = $this->reflectedProperty($field);
+            if ($rp === null) {
+                return true;
+            }
+
+            $type = $rp->getType();
+            if ($type && !$rp->isInitialized($this)) {
+                return true;
+            }
+
+            if ($type === null && !in_array($field, $this->propertyFields, true)) {
+                return true;
+            }
+
             $existing = $this->{$field} ?? null;
         }
 
@@ -619,7 +654,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                     return false;
                 }
             } elseif (!$rp->getHook(PropertyHookType::Get)) {
-                if (!isset($this->{$prop})) {
+                $type = $rp->getType();
+                if ($type && !$rp->isInitialized($this)) {
+                    return false;
+                }
+                if ($type === null && !in_array($prop, $this->propertyFields, true)) {
                     return false;
                 }
             }
@@ -957,7 +996,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function isOriginalField(string $name): bool
     {
-        return in_array($name, $this->_originalFields);
+        return in_array($name, $this->_originalFields, true);
     }
 
     /**
@@ -1536,9 +1575,37 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     protected function reflectedProperty(string $name): ?ReflectionProperty
     {
+        $class = static::class;
+
+        if (!isset(self::$reflectionCache[$class])) {
+            $attributes = (new ReflectionClass($class))->getAttributes('AllowDynamicProperties');
+
+            self::$reflectionCache[$class] = [
+                'hasDynamicProps' => $attributes !== [],
+                'properties' => [],
+            ];
+        }
+
+        if (self::$reflectionCache[$class]['hasDynamicProps']) {
+            try {
+                return new ReflectionProperty($this, $name);
+            } catch (ReflectionException) {
+                return null;
+            }
+        }
+
+        if (array_key_exists($name, self::$reflectionCache[$class]['properties'])) {
+            return self::$reflectionCache[$class]['properties'][$name];
+        }
+
         try {
-            return new ReflectionProperty($this, $name);
+            $reflection = new ReflectionProperty($this, $name);
+            self::$reflectionCache[$class]['properties'][$name] = $reflection;
+
+            return $reflection;
         } catch (ReflectionException) {
+            self::$reflectionCache[$class]['properties'][$name] = null;
+
             return null;
         }
     }
