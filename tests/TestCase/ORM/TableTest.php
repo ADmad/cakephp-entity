@@ -5565,7 +5565,7 @@ class TableTest extends TestCase
             'Model.afterSaveCommit',
             function (EventInterface $event, EntityInterface $entity, ArrayObject $options) use (&$eventTriggered): void {
                 $eventTriggered = true;
-            }
+            },
         );
 
         $article = $articles->findOrCreate(function ($query): void {

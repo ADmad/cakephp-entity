@@ -321,8 +321,8 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 'Passing an array as the first argument to `%s::set()` is deprecated. '
                 . 'Use `%s::patch()` instead.',
                 static::class,
-                static::class
-            )
+                static::class,
+            ),
         );
 
         return $this->patch($field, (array)$value);
@@ -423,6 +423,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
             if (!$propExists && isset($this->allowedDynamicFields[$name])) {
                 $this->dynamicFields[$name] = $value;
+
                 continue;
             }
 
@@ -520,7 +521,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function requireFieldPresence(bool $value = true): void
     {
         throw new CakeException(
-            'requireFieldPresence() is not supported in this class as use of actual properties is required.'
+            'requireFieldPresence() is not supported in this class as use of actual properties is required.',
         );
     }
 
@@ -1461,7 +1462,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
     public function setAccess(array|string $field, bool $set)
     {
         if ($field === '*') {
-            $this->_accessible = array_map(fn ($p) => $set, $this->_accessible);
+            $this->_accessible = array_map(fn($p) => $set, $this->_accessible);
             $this->_accessible['*'] = $set;
 
             return $this;
