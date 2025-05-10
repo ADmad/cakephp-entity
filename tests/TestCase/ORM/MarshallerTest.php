@@ -1500,17 +1500,19 @@ class MarshallerTest extends TestCase
         $this->assertTrue($entity->isDirty('not_in_schema'));
 
         // https://github.com/cakephp/cakephp/issues/18346
+        // phpcs:disable
         $entity = new class ([
             'title' => 'Foo',
             'author_id' => 1,
         ], ['useSetters' => false]) extends Entity {
             protected string $title {
-                set (?string $title) {
+                set (string $title) {
                     $this->title = 'The ' . $title;
                 }
             }
         };
         $entity->clean();
+        // phpcs:enable
 
         $this->assertSame('Foo', $entity->title);
         $marshall->merge($entity, ['title' => 'Foo', 'author_id' => 2]);

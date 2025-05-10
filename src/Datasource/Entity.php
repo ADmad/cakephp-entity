@@ -460,8 +460,26 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             isset($this->allowedDynamicFields[$field])
             && !property_exists($this, $field)
         ) {
-            $existing = $this->dynamicFields[$field] ?? null;
+            if (!array_key_exists($field, $this->dynamicFields)) {
+                return true;
+            }
+
+            $existing = $this->dynamicFields[$field];
         } else {
+            $rp = $this->reflectedProperty($field);
+            if ($rp === null) {
+                return true;
+            }
+
+            $type = $rp->getType();
+            if ($type && !$rp->isInitialized($this)) {
+                return true;
+            }
+
+            if ($type === null && !in_array($field, $this->propertyFields, true)) {
+                return true;
+            }
+
             $existing = $this->{$field} ?? null;
         }
 
@@ -628,7 +646,11 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                     return false;
                 }
             } elseif (!$rp->getHook(PropertyHookType::Get)) {
-                if (!isset($this->{$prop})) {
+                $type = $rp->getType();
+                if ($type && !$rp->isInitialized($this)) {
+                    return false;
+                }
+                if ($type === null && !in_array($prop, $this->propertyFields, true)) {
                     return false;
                 }
             }

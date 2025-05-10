@@ -541,7 +541,7 @@ class EntityTest extends TestCase
             protected $id;
             protected $name;
             protected $foo;
-            protected string $typed;
+            protected ?string $typed;
         };
         $this->assertTrue($entity->has('id'));
         $this->assertTrue($entity->has('name'));
@@ -549,10 +549,16 @@ class EntityTest extends TestCase
         $this->assertFalse($entity->has('typed'));
         $this->assertFalse($entity->has('last_name'));
 
+        $entity->typed = null;
+        $this->assertTrue($entity->has('typed'));
+
         $this->assertTrue($entity->has(['id']));
         $this->assertTrue($entity->has(['id', 'name']));
         $this->assertFalse($entity->has(['id', 'foo']));
         $this->assertFalse($entity->has(['id', 'nope']));
+
+        $entity->foo = null;
+        $this->assertTrue($entity->has('foo'));
 
         $entity = new class extends Entity {
             protected $things {
