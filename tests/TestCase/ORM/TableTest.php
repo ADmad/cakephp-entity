@@ -2346,7 +2346,7 @@ class TableTest extends TestCase
         $listener = function (EventInterface $event, $entity) {
             $event->stopPropagation();
 
-            return $entity;
+            $event->setResult($entity);
         };
         $table->getEventManager()->on('Model.beforeSave', $listener);
         $this->assertSame($data, $table->save($data));
