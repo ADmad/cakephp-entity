@@ -309,9 +309,9 @@ class EntityTest extends TestCase
             ->with(
                 ...self::withConsecutive(
                     [
-                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true, 'allowDynamic' => true],
+                    ['a' => 'b', 'c' => 'd'], ['guard' => false, 'setter' => true, 'allowDynamic' => true, 'asOriginal' => true],
                     ],
-                    [['foo' => 'bar'], ['guard' => false, 'setter' => true, 'allowDynamic' => true]],
+                    [['foo' => 'bar'], ['guard' => false, 'setter' => true, 'allowDynamic' => true, 'asOriginal' => true]],
                 ),
             );
 
@@ -331,7 +331,7 @@ class EntityTest extends TestCase
             ->getMock();
         $entity->expects($this->once())
             ->method('patch')
-            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true, 'allowDynamic' => true]);
+            ->with(['foo' => 'bar'], ['guard' => true, 'setter' => true, 'allowDynamic' => true, 'asOriginal' => true]);
         $entity->__construct(['foo' => 'bar'], ['guard' => true]);
     }
 

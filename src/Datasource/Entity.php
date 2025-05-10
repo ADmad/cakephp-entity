@@ -207,6 +207,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             $this->setOriginalField(array_keys($fields));
 
             $this->patch($fields, [
+                'asOriginal' => true,
                 'setter' => $options['useSetters'],
                 'guard' => $options['guard'],
                 'allowDynamic' => $options['allowDynamic'],
@@ -398,6 +399,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
                 continue;
             }
 
+            if ($options['asOriginal'] || $this->isModified($name, $value)) {
+                $this->setDirty($name, true);
+            } else {
+                continue;
+            }
+
             if (
                 $this->isOriginalField($name) &&
                 !array_key_exists($name, $this->_original) &&
@@ -415,10 +422,6 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
             if (!$propExists && $options['allowDynamic']) {
                 $this->allowedDynamicFields[$name] = true;
-            }
-
-            if ($this->isModified($name, $value)) {
-                $this->setDirty($name, true);
             }
 
             if (!$propExists && isset($this->allowedDynamicFields[$name])) {
@@ -441,6 +444,12 @@ class Entity implements EntityInterface, InvalidPropertyInterface
 
     /**
      * Check if the provided value is same as existing value for a field.
+     *
+     * This check is used to determine if a field should be set as dirty or not.
+     * It will return `false` for scalar values and objects which haven't changed.
+     * For arrays `true` will be returned always because the original/updated list
+     * could contain references to the same objects, even though those objects
+     * may have changed internally.
      *
      * @param string $field The field to check.
      * @return bool
@@ -957,7 +966,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function isOriginalField(string $name): bool
     {
-        return in_array($name, $this->_originalFields);
+        return in_array($name, $this->_originalFields, true);
     }
 
     /**
