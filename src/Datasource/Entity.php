@@ -6,7 +6,6 @@ declare(strict_types=1);
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  * @copyright Copyright (c) ADmad
  */
 namespace ADmad\Entity\Datasource;
@@ -26,12 +25,10 @@ use function Cake\Core\deprecationWarning;
  * An entity represents a single result row from a repository. It exposes the
  * methods for retrieving and storing properties associated in this row.
  *
- * This class is a modified version of Cake\ORM\Entity which by default uses
- * concrete properties instead of storing the field values internally in an array,
- * thus allowing the use of property hooks instead of method based mutators and accessors.
- * For the various features of entity to function it still relies on the use of
- * magic methods, so the properties *must* be declared as protected/private causing
- * `__get()`, `__set()` etc. to be triggered.
+ * This class uses concrete properties for storing the field values, thus allowing
+ * the use of property hooks as mutators and accessors. For the various features
+ * of the entity it relies on the use of magic methods, so the properties *must*
+ * be declared as protected/private causing `__get()`, `__set()` etc. to be triggered.
  *
  * Differences from Cake\ORM\Entity:
  *
@@ -42,10 +39,8 @@ use function Cake\Core\deprecationWarning;
  * - Indirect modification of properties is not allowed. For example, you cannot
  *   do `$entity->field['key'] = 'value'`, you must use
  *   `$entity->field = array_merge($entity->field, ['key' => 'value'])`.
- * - `has()` method will return false only for uninitialized properties, it will
- *   return `true` for properties set to `null`.
  * - Calling `unset()` for a hooked property will set it to `null` instead of
- *   unsetting it, since hooked properties can't be unset.
+ *   unsetting it, since hooked properties can't be unset in PHP.
  */
 class Entity implements EntityInterface, InvalidPropertyInterface
 {
