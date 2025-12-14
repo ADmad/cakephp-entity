@@ -60,6 +60,7 @@ use Cake\Validation\Validator;
 use Exception;
 use InvalidArgumentException;
 use PDOException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use RuntimeException;
@@ -83,6 +84,7 @@ use TestPlugin\Model\Table\CommentsTable;
 /**
  * Tests Table class
  */
+#[AllowMockObjectsWithoutExpectations]
 class TableTest extends TestCase
 {
     /**
@@ -4550,7 +4552,7 @@ class TableTest extends TestCase
 
         $this->assertTrue($authors->Articles->replace($author, $newArticles));
         $this->assertCount(count($newArticles), $author->articles);
-        $this->assertEquals((new Collection($newArticles))->extract('title'), (new Collection($author->articles))->extract('title'));
+        $this->assertEquals((new Collection($newArticles))->extract('title')->toArray(), (new Collection($author->articles))->extract('title')->toArray());
     }
 
     /**

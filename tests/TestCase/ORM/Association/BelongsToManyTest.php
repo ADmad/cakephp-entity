@@ -35,6 +35,7 @@ use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use TestApp\Model\Entity\Article;
 use TestApp\Model\Entity\ArticlesTag;
@@ -45,6 +46,7 @@ use function Cake\Collection\collection;
 /**
  * Tests BelongsToMany class
  */
+#[AllowMockObjectsWithoutExpectations]
 class BelongsToManyTest extends TestCase
 {
     /**

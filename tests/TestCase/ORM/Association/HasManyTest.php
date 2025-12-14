@@ -35,6 +35,7 @@ use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
 use Mockery;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use TestApp\Model\Entity\Article;
 use TestApp\Model\Entity\Author;
@@ -45,6 +46,7 @@ use function Cake\I18n\__;
 /**
  * Tests HasMany class
  */
+#[AllowMockObjectsWithoutExpectations]
 class HasManyTest extends TestCase
 {
     /**

@@ -1013,8 +1013,6 @@ class EntityTest extends TestCase
      */
     public function testConstructorWithClean(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $mock = Mockery::mock(Entity::class)->makePartial();
         $mock->shouldReceive('clean')->never();
         $mock->__construct();
@@ -1037,8 +1035,6 @@ class EntityTest extends TestCase
      */
     public function testConstructorWithMarkNew(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $mock = Mockery::mock(Entity::class)->makePartial();
         $mock->shouldReceive('setNew')->never();
         $mock->__construct();
