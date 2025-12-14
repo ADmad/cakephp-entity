@@ -32,6 +32,8 @@ use function Cake\Core\deprecationWarning;
  *
  * Differences from Cake\ORM\Entity:
  *
+ * - Trying to access non-existing properties as `$entity->foo will throw an exception,
+ *   but `$entity->get('foo')` will return null for non existent properties.
  * - Method based mutators and accessors are not used, instead property hooks are used.
  * - When using the `get` property hook for virtual fields, they can be accessed
  *   only using the same casing, unlike ORM\Entity which allows accessing using
@@ -230,7 +232,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function &__get(string $field): mixed
     {
-        return $this->get($field);
+        return $this->getOrFail($field);
     }
 
     /**
@@ -510,6 +512,22 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function &get(string $field): mixed
     {
+        return $this->getOrFail($field, false);
+    }
+
+    /**
+     * Get field with option for requireFieldPresence.
+     *
+     * Note: The returned value might be null if the field is set to null.
+     *
+     * @param string $field the name of the field to retrieve
+     * @param bool $requireFieldPresence Whether to throw an exception if the field is not present
+     * @return mixed
+     * @throws \InvalidArgumentException if an empty field name is passed
+     * @throws \Cake\Datasource\Exception\MissingPropertyException If property does not exist and $requireFieldPresence
+     */
+    protected function &getOrFail(string $field, bool $requireFieldPresence = true): mixed
+    {
         if ($field === '') {
             throw new InvalidArgumentException('Cannot get an empty field');
         }
@@ -531,7 +549,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
             return $value;
         }
 
-        if (!$fieldIsPresent) {
+        if (!$fieldIsPresent && $requireFieldPresence) {
             throw new MissingPropertyException([
                 'property' => $field,
                 'entity' => $this::class,
@@ -670,19 +688,13 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      *
      * @param string $field The field to check.
      * @return bool
+     * @deprecated 5.3.0 Use hasValue() instead.
      */
     public function isEmpty(string $field): bool
     {
-        $value = $this->has($field) ? $this->get($field) : null;
-        if (
-            $value === null ||
-            $value === [] ||
-            $value === ''
-        ) {
-            return true;
-        }
+        deprecationWarning('5.3.0', 'isEmpty() is deprecated. Use hasValue() instead.');
 
-        return false;
+        return !$this->hasValue($field);
     }
 
     /**
@@ -695,6 +707,7 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      * - Any object
      * - Integer, even `0`
      * - Float, even 0.0
+     * - Boolean, even `false`
      *
      * and false in all other cases.
      *
@@ -703,7 +716,16 @@ class Entity implements EntityInterface, InvalidPropertyInterface
      */
     public function hasValue(string $field): bool
     {
-        return !$this->isEmpty($field);
+        $value = $this->getOrFail($field, false);
+        if (
+            $value === null ||
+            $value === [] ||
+            $value === ''
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
