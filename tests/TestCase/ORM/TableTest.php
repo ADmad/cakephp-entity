@@ -2040,7 +2040,7 @@ class TableTest extends TestCase
         $table = new Table(['table' => 'articles']);
         $table->addBehavior('Sluggable');
         $this->assertTrue($table->behaviors()->hasMethod('slugify'), 'slugify should be mapped');
-        $this->assertSame('foo-bar', $table->slugify('foo bar'));
+        $this->assertSame('foo-bar', $table->getBehavior('Sluggable')->slugify('foo bar'));
 
         $table->removeBehavior('Sluggable');
         $this->assertFalse($table->behaviors()->hasMethod('slugify'), 'slugify should not be callable');
@@ -2116,26 +2116,6 @@ class TableTest extends TestCase
         $this->expectException(MissingBehaviorException::class);
         $table = $this->getTableLocator()->get('article');
         $this->assertNull($table->addBehavior('NopeNotThere'));
-    }
-
-    /**
-     * Test mixin methods from behaviors.
-     */
-    public function testCallBehaviorMethod(): void
-    {
-        $table = $this->getTableLocator()->get('article');
-        $table->addBehavior('Sluggable');
-        $this->assertSame('some-value', $table->slugify('some value'));
-    }
-
-    /**
-     * Test you can alias a behavior method
-     */
-    public function testCallBehaviorAliasedMethod(): void
-    {
-        $table = $this->getTableLocator()->get('article');
-        $table->addBehavior('Sluggable', ['implementedMethods' => ['wednesday' => 'slugify']]);
-        $this->assertSame('some-value', $table->wednesday('some value'));
     }
 
     /**

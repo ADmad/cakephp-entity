@@ -1057,7 +1057,7 @@ class BelongsToManyTest extends TestCase
      */
     public function testPropertyOption(): void
     {
-        $config = ['propertyName' => 'thing_placeholder'];
+        $config = ['propertyName' => 'thing_placeholder', 'sourceTable' => $this->article];
         $association = new BelongsToMany('Thing', $config);
         $this->assertSame('thing_placeholder', $association->getProperty());
     }
@@ -1185,7 +1185,7 @@ class BelongsToManyTest extends TestCase
         $result = $table
             ->find()
             ->contain(['Tags' => function (SelectQuery $q) {
-                return $q->select(['two' => $q->newExpr('1 + 1')])->enableAutoFields();
+                return $q->select(['two' => $q->expr('1 + 1')])->enableAutoFields();
             }])
             ->first();
 

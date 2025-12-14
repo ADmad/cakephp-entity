@@ -5,10 +5,9 @@
     "license": "MIT",
     "require": {
         "php": ">=8.4",
-        "cakephp/datasource": "^5.2"
+        "cakephp/cakephp": "^5.3@RC"
     },
     "require-dev": {
-        "cakephp/cakephp": "^5.2",
         "mockery/mockery": "^1.6",
         "phpunit/phpunit": "^12.5.3"
     },
